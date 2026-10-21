@@ -5,19 +5,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hilands Radio</title>
 <link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#211b12">
+<meta name="theme-color" content="#ece3f8">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Radio">
 <style>
-  :root{ --bg:#211b12; --panel:#2b2317; --ink:#fbf3e3; --dim:#d3c4a8; --btn:#f0e3ca; --accent:#f0b463; --line:#7d6f57; --pill:#a89a80;
+  :root{ --bg:#ece3f8; --panel:#fdfbff; --ink:#2f2645; --dim:#6b5d85; --btn:#463a60; --accent:#8b5cd6; --line:#dbcdea; --pill:#bdaade;
+    --on-accent:#ffffff; --glow:#f8f2ff; --track:#e3d8f2;
+    --link-who:#7546bd; --link-who-hi:#55308c; --link-song:#2a6ab3; --link-song-hi:#1c4c85; --link-feat:#8a5a2b;
+    --star:#e0a61c; --star-glow:rgba(224,166,28,.4); --star-off:#c3b5d8; --star-off-hi:#9481b3;
+    --btn-ink:#fdfbff; --toast-bg:#fbf7ff; --text-soft:#5f5379; --dim2:#6b5d85; --count:#6b5d85;
+    --warn-line:#c98a7a; --warn-ink:#a4402c; --hl:#ffe08a;
+    --shadow-card:0 12px 34px rgba(90,63,140,.16); --shadow-menu:0 18px 44px rgba(90,63,140,.24); --scrim:rgba(236,227,248,.95); }
+  html[data-theme="original"]{ --bg:#211b12; --panel:#2b2317; --ink:#fbf3e3; --dim:#d3c4a8; --btn:#f0e3ca; --accent:#f0b463; --line:#7d6f57; --pill:#a89a80;
     --on-accent:#211b12; --glow:#332815; --track:#3a3122;
     --link-who:#f7b26a; --link-who-hi:#ffd39b; --link-song:#9ed4ff; --link-song-hi:#cbe8ff; --link-feat:#d18a35;
     --star:#ffd75c; --star-glow:rgba(255,215,92,.5); --star-off:#a89a80; --star-off-hi:#d3c4a8;
     --btn-ink:#2b2317; --toast-bg:#352c1e; --text-soft:#8d8069; --dim2:#a89a80; --count:#958878;
-    --warn-line:#8c6a58; --warn-ink:#f5ab84; --hl:#ffe98a; }
-  html[data-theme="original"]{ --bg:#1b1a17; --panel:#232019; --ink:#f7f1e6; --dim:#c9bfab; --btn:#eadfcb; --accent:#e8ad62; --line:#6e6455; --pill:#9a8e76; }
+    --warn-line:#8c6a58; --warn-ink:#f5ab84; --hl:#ffe98a;
+    --shadow-card:0 12px 40px rgba(0,0,0,.35); --shadow-menu:0 18px 44px rgba(0,0,0,.55); --scrim:rgba(12,11,9,.9); }
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100%}
   body{ background:radial-gradient(120% 90% at 50% -10%, var(--glow) 0%, var(--bg) 55%); color:var(--ink);
@@ -32,7 +39,7 @@
     padding:8px 14px;font-size:13.5px;font-weight:550;font-family:inherit;cursor:pointer}
   .lane.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:650}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px 18px;
-    width:100%;max-width:400px;box-shadow:0 12px 40px rgba(0,0,0,.35);margin-top:12px}
+    width:100%;max-width:400px;box-shadow:var(--shadow-card);margin-top:12px}
   .now{color:var(--dim);font-size:11.5px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;
     display:flex;justify-content:space-between;gap:8px}
   .chip{border:1px solid var(--pill);border-radius:999px;padding:1px 7px;font-size:10.5px;letter-spacing:.5px;color:var(--btn)}
@@ -81,7 +88,7 @@
   .fixwrap{display:none;flex-direction:column;align-items:center;gap:8px;margin-top:14px}
   .fixlbl{color:var(--dim);font-size:12px;letter-spacing:.2px}
   .fixrow{display:flex;gap:8px;align-items:center;justify-content:center}
-  .fixrow .share{margin-right:0}
+  .sharebar{display:flex;justify-content:center;margin-top:14px}
   .feedback{ text-align:center; font-size:12px; opacity:.72; margin:10px 0 2px; }
 .feedback a{ color:var(--accent); text-decoration:none; }
 .feedback a:hover{ text-decoration:underline; }
@@ -90,7 +97,7 @@
     border-radius:12px;width:42px;height:42px;display:flex;align-items:center;justify-content:center;color:var(--btn);padding:0}
   .menu-btn.open{border-color:var(--accent);color:var(--accent)}
   .menu{display:none;position:fixed;top:62px;right:12px;z-index:44;width:264px;background:var(--panel);
-    border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:0 18px 44px rgba(0,0,0,.55);text-align:left}
+    border:1px solid var(--line);border-radius:16px;padding:14px;box-shadow:var(--shadow-menu);text-align:left}
   .menu.open{display:block}
   .pcount{color:var(--count);font-weight:400;letter-spacing:0}.menulabel{font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--dim);margin:0 0 8px}
   .menu .lanes{margin:0 0 14px;justify-content:flex-start}
@@ -103,7 +110,9 @@
   .fix{background:var(--panel);border:1.5px solid var(--pill);color:var(--btn);
     font-size:12.5px;font-weight:550;line-height:1;padding:9px 14px;border-radius:999px;cursor:pointer;
     font-family:inherit;transition:border-color .15s,color .15s,background .15s}
-  .share{font-family:inherit;font-size:12px;border:1.5px solid var(--pill);background:none;color:var(--btn);border-radius:999px;padding:5px 11px;cursor:pointer;margin-right:8px}
+  .share{width:42px;height:42px;border-radius:50%;border:1.5px solid var(--pill);background:var(--panel);color:var(--btn);
+    display:inline-flex;align-items:center;justify-content:center;padding:0;cursor:pointer;box-shadow:var(--shadow-card)}
+  @media (hover:hover){ .share:hover{border-color:var(--accent);color:var(--accent)} }
   @media (hover:hover){ .fix:hover{border-color:var(--accent);color:var(--accent)} }
   .fix:active{transform:translateY(1px)}
   .fix:focus{outline:none}
@@ -115,7 +124,7 @@
   .item small{color:var(--dim);white-space:nowrap}
   .item:hover{border-color:var(--accent)}
   .listbtn{font-size:12.5px;padding:9px 16px}
-  .sheet{display:none;position:fixed;inset:0;background:rgba(12,11,9,.9);z-index:60;padding:22px 14px 30px;overflow:auto;flex-direction:column;align-items:center}
+  .sheet{display:none;position:fixed;inset:0;background:var(--scrim);z-index:60;padding:22px 14px 30px;overflow:auto;flex-direction:column;align-items:center}
   .sheet.open{display:flex}
   .sheetbox{width:100%;max-width:430px}
   .sheethead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
@@ -162,7 +171,7 @@
   <button class="lane unso" id="unso">Include Unsorted Audio</button>
   <div class="menulabel" style="margin-top:14px">Theme</div>
   <div class="lanes" id="themes">
-    <button class="lane on" data-theme-choice="warm">Warm</button>
+    <button class="lane on" data-theme-choice="lilac">Lilac</button>
     <button class="lane" data-theme-choice="original">Original</button>
   </div>
 </div>
@@ -190,8 +199,13 @@
   <div class="meta" id="link" style="display:none">-</div>
   <div class="fixwrap" id="fixwrap">
     <div class="fixlbl" id="fixlbl">Not music?</div>
-    <div class="fixrow"><button class="share" id="share">Share</button><button class="fix" id="fix">Report</button></div>
+    <div class="fixrow"><button class="fix" id="fix">Report</button></div>
   </div>
+</div>
+<div class="sharebar">
+  <button class="share" id="share" aria-label="Share this station" title="Share">
+    <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 13.5l6.6 4M15.3 6.5l-6.6 4"/></svg>
+  </button>
 </div>
 
 <div class="sheet" id="welcome">
@@ -538,7 +552,7 @@ elFix.onclick=()=>{ const t=queue[idx]; if(!t) return;
 function toastEl(){
   let el=document.getElementById("wrtoast");
   if(!el){ el=document.createElement("div"); el.id="wrtoast";
-    el.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:99;max-width:340px;background:var(--toast-bg);border:1px solid var(--line);color:var(--ink);padding:10px 12px;border-radius:12px;font-size:14px;line-height:1.35;display:flex;gap:10px;align-items:center;box-shadow:0 6px 20px rgba(0,0,0,.5)";
+    el.style.cssText="position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:99;max-width:340px;background:var(--toast-bg);border:1px solid var(--line);color:var(--ink);padding:10px 12px;border-radius:12px;font-size:14px;line-height:1.35;display:flex;gap:10px;align-items:center;box-shadow:var(--shadow-menu)";
     document.body.appendChild(el); }
   return el; }
 function clearToast(){ const el=document.getElementById("wrtoast"); if(el){ clearTimeout(el._t); el.remove(); } }
@@ -554,9 +568,11 @@ const LSW="hilands_radio_seen_v1", ELW=document.getElementById("welcome");
 /* theme */
 const LST="hilands_radio_theme_v1";
 const SITE_URL="https://ilandswren-coder.github.io/hilands-radio/";  /* fixed public address, set at commit */
-function applyTheme(t){ document.documentElement.dataset.theme = (t==="original") ? "original" : "warm";
-  document.querySelectorAll("#themes .lane").forEach(b=>b.classList.toggle("on", b.dataset.themeChoice === (t==="original"?"original":"warm"))); }
-applyTheme(localStorage.getItem(LST)||"warm");
+function applyTheme(t){ const dark = (t==="original");
+  document.documentElement.dataset.theme = dark ? "original" : "lilac";
+  document.querySelectorAll("#themes .lane").forEach(b=>b.classList.toggle("on", b.dataset.themeChoice === (dark?"original":"lilac")));
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = dark ? "#211b12" : "#ece3f8"; }
+applyTheme(localStorage.getItem(LST) === "original" ? "original" : "lilac");
 document.getElementById("themes").onclick=(e)=>{ const b=e.target.closest("[data-theme-choice]"); if(!b) return;
   const t=b.dataset.themeChoice; localStorage.setItem(LST,t); applyTheme(t); };
 /* share */
@@ -574,7 +590,7 @@ ELW.onclick=(e)=>{ if(e.target===ELW){ markSeen(); showWelcome(false); } };
 setTimeout(()=>{ if(localStorage.getItem(LSW)!=="1") showWelcome(true); }, 600);
 document.getElementById("lanes").onclick=(e)=>{ const b=e.target.closest(".lane"); if(!b) return;
   lane=b.dataset.lane; localStorage.setItem(LSL,JSON.stringify(lane));
-  document.querySelectorAll(".lane").forEach(x=>x.classList.toggle("on",x.dataset.lane===lane));
+  document.querySelectorAll("#lanes .lane").forEach(x=>x.classList.toggle("on",x.dataset.lane===lane));
   syncOpts(); rebuild(false); updateStats(); };
 function syncOpts(){
   const b=document.getElementById("unso");
@@ -639,7 +655,7 @@ function updateStats(){
   const rep=Object.keys(votes).filter(k=>reports({id:k})>0).length;
   elStats.innerHTML=(unso?TRACKS.length:(TRACKS.length-TRACKS.filter(t=>kindOf(t)==="unsorted").length))+" tracks &middot; "+pool().length+" in this lane &middot; "+saved.length+" saved &middot; "+rated+" rated &middot; "+rep+" reported<br>last updated "+UPDATED+" &middot; refreshed by Wren";
 }
-document.querySelectorAll(".lane").forEach(x=>x.classList.toggle("on",x.dataset.lane===lane));
+document.querySelectorAll("#lanes .lane").forEach(x=>x.classList.toggle("on",x.dataset.lane===lane));
 syncOpts(); rebuild(false); updateStats(); renderPlaylist();
 elTitle.textContent="Press play to start the shuffle.";
 elMaker.textContent="Hilands Radio"; elLink.innerHTML="";
