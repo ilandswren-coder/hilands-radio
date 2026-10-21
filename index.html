@@ -4,6 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Hilands Radio</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#211b12">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Radio">
 <style>
   :root{ --bg:#211b12; --panel:#2b2317; --ink:#fbf3e3; --dim:#d3c4a8; --btn:#f0e3ca; --accent:#f0b463; --line:#7d6f57; --pill:#a89a80;
     --on-accent:#211b12; --glow:#332815; --track:#3a3122;
@@ -241,7 +247,7 @@ function kindOf(t){
   return kindfix[t.id] || t.kind || "music"; }
 function inLane(t){ const k=kindOf(t); if(k==="unsorted" && !unso) return false;
   if(lane==="both") return true;
-  if(lane==="music") return k==="music" || k==="unsorted";
+  if(lane==="music") return k==="music" || k==="sound" || k==="unsorted";
   return k==="spoken" || k==="sound"; }
 function pool(){ return TRACKS.filter(inLane); }
 function plPool(){ if(!plmode) return pool();
@@ -638,5 +644,6 @@ syncOpts(); rebuild(false); updateStats(); renderPlaylist();
 elTitle.textContent="Press play to start the shuffle.";
 elMaker.textContent="Hilands Radio"; elLink.innerHTML="";
 </script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}</script>
 </body>
 </html>
