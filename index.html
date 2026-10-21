@@ -547,7 +547,7 @@ function toast(msg, label, act){
 const LSW="hilands_radio_seen_v1", ELW=document.getElementById("welcome");
 /* theme */
 const LST="hilands_radio_theme_v1";
-const SITE_URL="";  /* fixed public address, set at commit */
+const SITE_URL="https://ilandswren-coder.github.io/hilands-radio/";  /* fixed public address, set at commit */
 function applyTheme(t){ document.documentElement.dataset.theme = (t==="original") ? "original" : "warm";
   document.querySelectorAll("#themes .lane").forEach(b=>b.classList.toggle("on", b.dataset.themeChoice === (t==="original"?"original":"warm"))); }
 applyTheme(localStorage.getItem(LST)||"warm");
