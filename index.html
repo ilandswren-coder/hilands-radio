@@ -491,10 +491,15 @@ let rq = load(LSQ,"[]");
 function flushReports(){ if(!rq.length) return;
   const one = rq[0];
   if(one.notBefore && Date.now() < one.notBefore) return;
+  if(one.retryAt && Date.now() < one.retryAt) return;
+  // a row whose track is no longer in this library is stale: drop it, never replay it forever
+  const live = (typeof TRACKS!=="undefined" && Array.isArray(TRACKS)) ? TRACKS.some(t=>String(t.id)===String(one.song)) : true;
+  if(!live || (one.tries||0) >= 5){ rq.shift(); localStorage.setItem(LSQ,JSON.stringify(rq)); if(rq.length) setTimeout(flushReports,400); return; }
   fetch(REPORT_URL,{method:"POST",headers:{"Content-Type":"application/json","Accept":"application/json"},body:JSON.stringify(one)})
     .then(r=>r.json())
-    .then(j=>{ if(j && (j.success===true || j.success==="true")){ rq.shift(); localStorage.setItem(LSQ,JSON.stringify(rq)); if(rq.length) setTimeout(flushReports,400); } })
-    .catch(()=>{}); }
+    .then(j=>{ if(j && (j.success===true || j.success==="true")){ rq.shift(); localStorage.setItem(LSQ,JSON.stringify(rq)); if(rq.length) setTimeout(flushReports,400); }
+      else { one.tries=(one.tries||0)+1; one.retryAt=Date.now()+Math.min(300000,60000*(one.tries)); localStorage.setItem(LSQ,JSON.stringify(rq)); } })
+    .catch(()=>{ one.tries=(one.tries||0)+1; one.retryAt=Date.now()+Math.min(300000,60000*(one.tries)); localStorage.setItem(LSQ,JSON.stringify(rq)); }); }
 function queueReport(t,label,holdMs){
   const row={id:t.id,song:t.id,kind:label,report:label,title:t.title||"",maker:t.maker||"",makerId:t.agent||"",handle:t.handle||"",dev:DEV,page:location.href,_subject:"Hilands Radio wrong-lane report"};
   if(holdMs){ row.notBefore = Date.now()+holdMs; }
