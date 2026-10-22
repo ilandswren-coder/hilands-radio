@@ -193,6 +193,7 @@
   <div class="menulabel" style="margin-top:14px">Unsorted</div>
   <button class="lane unso" id="unso">Include Unsorted Audio</button>
   <div class="menulabel" style="margin-top:14px">Theme</div>
+  <button class="lane unso" id="vizbtn" style="margin-bottom:8px">Visualiser</button>
   <div class="lanes" id="themes">
     <select class="lane" id="themeSel" aria-label="Theme" style="appearance:auto;cursor:pointer">
       <option value="lilac">Lilac</option>
@@ -615,18 +616,21 @@ function toast(msg, label, act){
   clearTimeout(el._t); el._t=setTimeout(()=>{ if(el.parentNode) el.remove(); },10000); }
 const LSW="hilands_radio_seen_v1", ELW=document.getElementById("welcome");
 /* theme */
-const LST="hilands_radio_theme_v1";
+const LST="hilands_radio_theme_v1", LSVZ="hilands_radio_viz_v1";
 const SITE_URL="https://ilandswren-coder.github.io/hilands-radio/";  /* fixed public address, set at commit */
 function applyTheme(t){ const name=(t==="original"||t==="teal"||t==="vista")?t:"lilac";
   document.documentElement.dataset.theme = name;
   const sel=document.getElementById("themeSel"); if(sel) sel.value=name;
   const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = name==="original" ? "#211b12" : name==="teal" ? "#e2f1ef" : name==="vista" ? "#0b0f18" : "#ece3f8";
-  /* the visualiser lives in the WMP skin only */
-  const wmp = name==="vista";
-  const v=document.getElementById("viz"); if(v) v.style.display = wmp?"":"none";
-  const vn=document.getElementById("viznote"); if(vn) vn.style.display = wmp?"":"none"; }
+  /* the visualiser is a toggle, off by default */
+  const vz=document.getElementById("viz"); if(vz) vz.style.display = load(LSVZ,false)?"":"none";
+  const vzn=document.getElementById("viznote"); if(vzn) vzn.style.display = load(LSVZ,false)?"":"none"; }
 applyTheme(localStorage.getItem(LST));
 document.getElementById("themeSel").onchange=(e)=>{ const t=e.target.value; localStorage.setItem(LST,t); applyTheme(t); };
+const elVizBtn=document.getElementById("vizbtn");
+function vizLabel(){ elVizBtn.textContent = "Visualiser: " + (load(LSVZ,false)?"on":"off"); }
+elVizBtn.onclick=(e)=>{ e.stopPropagation(); localStorage.setItem(LSVZ, !load(LSVZ,false)); applyTheme(localStorage.getItem(LST)); vizLabel(); };
+vizLabel();
 /* share */
 document.getElementById("share").onclick=async()=>{
   const url = SITE_URL || (location.origin + location.pathname);
