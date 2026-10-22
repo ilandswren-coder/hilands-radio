@@ -724,6 +724,8 @@ const envCache={}; let envCur=null, envRaf=0;
 async function ensureEnv(t){
   if(!t||!t.audio) return null;
   if(envCache[t.id]) return envCache[t.id];
+  const e0=ENV[t.id]; // env.json values are plain JSON arrays of 44 bars
+  if(e0){ const f=e0 instanceof Float32Array?e0:new Float32Array(e0); envCache[t.id]=f; return f; }
   try{
     const ab=await fetchEnvAudio(t); if(!ab) { if(!vizFail) vizFail="no envelope yet"; return null; }
     const AC=window.AudioContext||window.webkitAudioContext; if(!AC){ vizFail="no AudioContext"; return null; }

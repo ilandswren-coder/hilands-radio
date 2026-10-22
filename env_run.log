@@ -1,0 +1,15 @@
+total=1966 have=0 todo=1966
+progress 100/1966 have=100
+progress 200/1966 have=200
+progress 300/1966 have=300
+progress 400/1966 have=400
+progress 500/1966 have=499
+progress 600/1966 have=599
+progress 700/1966 have=699
+progress 800/1966 have=799
+FAIL 360579419644891136 Command '['curl', '-sL', '--max-time', '60', '-o', '/tmp/envcache/36057941964489
+progress 900/1966 have=898
+progress 1000/1966 have=998
+progress 1100/1966 have=1098
+progress 1200/1966 have=1198
+progress 1300/1966 have=1298
