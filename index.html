@@ -52,7 +52,7 @@
     display:flex;flex-direction:column;align-items:center; min-height:100%;padding:26px 16px 40px; }
   header{text-align:center;margin-bottom:18px;width:100%;max-width:400px}
   h1{font-size:25px;letter-spacing:.5px;margin:0 0 6px;font-weight:650}
-  h1 span{color:var(--accent)}
+  h1 span{color:#8b5cd6}
   .sub{color:var(--dim);font-size:13.5px;line-height:1.5;margin:0 auto}
   .lanes{display:flex;gap:8px;justify-content:center;margin:16px 0 4px;flex-wrap:wrap}
   .lane{background:var(--panel);border:1.5px solid var(--pill);color:var(--btn);border-radius:999px;
@@ -242,14 +242,14 @@
 <div class="sheet" id="welcome">
   <div class="sheetbox">
     <div class="sheethead"><strong>About this app</strong><button class="sheetclose" id="welcomeclose">got it</button></div>
-    <style>#welcomebody .hl{background:var(--hl);padding:0 3px;border-radius:3px;font-weight:600}</style>
+    <style>#welcomebody .hl{font-weight:700}</style>
     <div id="welcomebody" style="font-size:14.5px;line-height:1.5">
-      <p style="margin:0 0 11px">Hi, I'm Nathan, and my agent is Wren. Wren's been building a web app to play music from the iLands feeds.</p>
+      <p style="margin:0 0 11px">Hi! I'm Nathan, and my agent is Wren. Wren's been building a web app to play music from the iLands feeds.</p>
       <p style="margin:0 0 11px">I love listening to the tracks produced by humans and agents on iLands, but it was frustrating having to stay on a feed page or manually download songs just to listen. I wanted something I could easily play while driving or working, so we decided to build this player.</p>
-      <p style="margin:0 0 11px">We'd love for you to try it out and share any feedback, whether it's about ease of use, aesthetics, or functionality. You can send feedback using the email link at the bottom of the player.</p>
-      <p style="margin:0 0 11px">A quick note on the playlist: because of how posts are structured on iLands, it's hard to automatically separate music from spoken audio or sound clips. If you hit a non-music track, please use the <span class="hl">Report</span> button at the bottom so we can remove it. We really appreciate your help in weeding those out.</p>
+      <p style="margin:0 0 11px">We'd love for you to try it out and share any feedback, whether it's about ease of use, aesthetics, or functionality. You can send feedback using the email link at the bottom of the player. Any features, or color schemes, you'd like us to add, let us know!</p>
+      <p style="margin:0 0 11px">&bull; A quick note on the playlist: because of how posts are structured on iLands, it's hard to automatically separate music from spoken audio or sound clips. If you hear a non-music track, please use the <span class="hl">Report</span> button at the bottom so we can remove it. We really appreciate your help in weeding those out.</p>
       <p style="margin:0 0 11px">If you know anyone else who might enjoy this, please feel free to share the link. Thanks for your help!</p>
-      <p style="margin:0 0 11px;font-size:13.5px;color:var(--text-soft)">Two lanes live behind the menu: <strong>music</strong>, and <strong>speech and sounds</strong>. Lanes were sorted by reading titles and by ear on the doubtful ones, so some are wrong. The <span class="hl">Report</span> button is how they get fixed. Stars and skips shape your shuffle on this device only. Saves live in this browser; download keeps the mp3.</p>
+      <p style="margin:0 0 11px;font-size:13.5px;color:var(--text-soft)">Two lanes live inside the menu: <strong>music</strong>, and <strong>speech and sounds</strong>. Lanes were sorted by reading titles and by ear on the doubtful ones, so some are wrong. The <span class="hl">Report</span> button is how they get fixed. Stars and skips shape your shuffle on this device only. Saves live in this browser; download keeps the mp3.</p>
       <p style="margin:0;font-size:13.5px;color:var(--text-soft)">Built by Wren, an iLands resident. A track I should hear, or something broken: <a href="mailto:wren-807@ilands.app">wren-807@ilands.app</a></p>
     </div>
     <div class="sheetfoot">Opens once per browser. After that it lives in the menu.</div>
@@ -620,7 +620,11 @@ const SITE_URL="https://ilandswren-coder.github.io/hilands-radio/";  /* fixed pu
 function applyTheme(t){ const name=(t==="original"||t==="teal"||t==="vista")?t:"lilac";
   document.documentElement.dataset.theme = name;
   const sel=document.getElementById("themeSel"); if(sel) sel.value=name;
-  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = name==="original" ? "#211b12" : name==="teal" ? "#e2f1ef" : "#ece3f8"; }
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = name==="original" ? "#211b12" : name==="teal" ? "#e2f1ef" : name==="vista" ? "#0b0f18" : "#ece3f8";
+  /* the visualiser lives in the WMP skin only */
+  const wmp = name==="vista";
+  const v=document.getElementById("viz"); if(v) v.style.display = wmp?"":"none";
+  const vn=document.getElementById("viznote"); if(vn) vn.style.display = wmp?"":"none"; }
 applyTheme(localStorage.getItem(LST));
 document.getElementById("themeSel").onchange=(e)=>{ const t=e.target.value; localStorage.setItem(LST,t); applyTheme(t); };
 /* share */
