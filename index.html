@@ -32,6 +32,19 @@
     --btn-ink:#fdfcf9; --toast-bg:#f4fbfa; --text-soft:#4f7a74; --dim2:#57837d; --count:#4f7a74;
     --warn-line:#d99a72; --warn-ink:#b04a1e; --hl:#ffd9a8;
     --shadow-card:0 12px 34px rgba(31,90,84,.16); --shadow-menu:0 18px 44px rgba(31,90,84,.24); --scrim:rgba(226,241,239,.95); }
+  html[data-theme="vista"]{ --bg:#0b0f18; --panel:#151b28; --ink:#e6edf8; --dim:#93a4bd; --btn:#dfe8f5; --accent:#4aa3ff; --line:#33415c; --pill:#3d4d6b;
+    --on-accent:#081018; --glow:#16233c; --track:#26314a;
+    --link-who:#7db8ff; --link-who-hi:#a8ccff; --link-song:#58b0e8; --link-song-hi:#8ecbf5; --link-feat:#8fa8c8;
+    --star:#6fb1ff; --star-glow:rgba(111,177,255,.45); --star-off:#3d4d6b; --star-off-hi:#5a6f96;
+    --btn-ink:#081018; --toast-bg:#151b28; --text-soft:#93a4bd; --dim2:#8496b3; --count:#93a4bd;
+    --warn-line:#7a5a3a; --warn-ink:#e0a060; --hl:#26405f;
+    --shadow-card:0 14px 38px rgba(0,0,0,.55); --shadow-menu:0 20px 48px rgba(0,0,0,.6); --scrim:rgba(11,15,24,.95); }
+  html[data-theme="vista"] .card{position:relative;overflow:hidden;border:1px solid rgba(120,160,220,.35);
+    background:linear-gradient(180deg,#26324b 0%,#111827 42%,#0a0f19 100%)}
+  html[data-theme="vista"] .card::before{content:"";position:absolute;left:0;right:0;top:0;height:42%;
+    background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.02));border-radius:17px 17px 0 0;pointer-events:none}
+  html[data-theme="vista"] .card::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.06;
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E")}
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100%}
   body{ background:radial-gradient(120% 90% at 50% -10%, var(--glow) 0%, var(--bg) 55%); color:var(--ink);
@@ -64,6 +77,7 @@
   a.songtitle .go{color:var(--link-song);opacity:.75;margin-right:6px;font-size:12px}
   a.songtitle:hover{text-decoration:underline}
   a.mk.who{color:var(--link-who);font-weight:650}
+  #viz{display:block;width:100%;height:36px;margin:14px 0 2px;opacity:0;transition:opacity .4s}
   .prog{height:4px;background:var(--track);border-radius:3px;margin:15px 0 6px;overflow:hidden}
   .prog i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px}
   .times{display:flex;justify-content:space-between;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
@@ -97,7 +111,7 @@
   .fixwrap{display:none;flex-direction:column;align-items:center;gap:8px;margin-top:14px}
   .fixlbl{color:var(--dim);font-size:12px;letter-spacing:.2px}
   .fixrow{display:flex;gap:8px;align-items:center;justify-content:center}
-  .sharebar{display:flex;justify-content:center;margin-top:38px}
+  .sharebar{display:flex;justify-content:center;margin-top:19px}
   .feedback{ text-align:center; font-size:12px; opacity:.72; margin:22px 0 2px; }
 .feedback a{ color:var(--accent); text-decoration:none; }
 .feedback a:hover{ text-decoration:underline; }
@@ -154,7 +168,7 @@
   .pempty{color:var(--dim);font-size:13.5px;text-align:center;padding:20px 8px;line-height:1.6}
   .sheetfoot{color:var(--dim);font-size:11.5px;text-align:center;margin-top:14px;line-height:1.6;max-width:400px}
   .stats{color:var(--dim);font-size:12px;text-align:center;margin-top:16px;line-height:1.6;max-width:400px}
-  footer{color:var(--dim);font-size:12px;text-align:center;margin-top:136px;line-height:1.6;max-width:400px}
+  footer{color:var(--dim);font-size:12px;text-align:center;margin-top:150px;line-height:1.6;max-width:400px}
 .featline{font-size:12px;margin-top:3px;color:var(--dim2)}.featlink{color:var(--link-feat);text-decoration:none}.featlink:hover{text-decoration:underline}.featwho{color:var(--dim2)}
 </style>
 </head>
@@ -180,16 +194,20 @@
   <button class="lane unso" id="unso">Include Unsorted Audio</button>
   <div class="menulabel" style="margin-top:14px">Theme</div>
   <div class="lanes" id="themes">
-    <button class="lane on" data-theme-choice="lilac">Lilac</button>
-    <button class="lane" data-theme-choice="original">Original</button>
-    <button class="lane" data-theme-choice="teal">Teal</button>
+    <select class="lane" id="themeSel" aria-label="Theme" style="appearance:auto;cursor:pointer">
+      <option value="lilac">Lilac</option>
+      <option value="original">Original</option>
+      <option value="teal">Teal</option>
+      <option value="vista">Vista (WMP)</option>
+    </select>
   </div>
 </div>
 <div class="card">
   <div class="now"><span id="nowlabel">now playing</span><span class="chip" id="kind">music</span></div>
   <div class="maker" id="maker">&mdash;</div>
   <div class="title" id="title">Press play.</div>
-  <div class="prog"><i id="bar"></i></div>
+  <canvas id="viz" width="352" height="36" aria-hidden="true"></canvas>
+<div class="prog"><i id="bar"></i></div>
   <div class="times"><span id="tcur">0:00</span><span id="tdur">0:00</span></div>
   <div class="controls">
     <button class="side" id="prev" aria-label="previous">&#9198;</button>
@@ -385,6 +403,8 @@ function playCurrent(){
   try{ audio.volume=1; }catch(e){}
   audio.src=t.audio; try{ audio.load(); }catch(e){}
   attemptPlay(); show();
+  ensureEnv(t).then(e=>{ if(e && queue[idx]===t){ envCur=e; elViz.style.opacity=1;
+    if(!envRaf && wantPlay && !audio.paused) envRaf=requestAnimationFrame(drawViz); } });
   elBar.style.width="0%"; elCur.textContent="0:00";
 }
 function nextIx(fwd){
@@ -404,7 +424,7 @@ elPlay.onclick=()=>{
     if(audio.currentSrc && audio.currentTime>0 && !audio.ended){
       wantPlay=true; setResume(false); setNote(""); attemptPlay();
     } else { playCurrent(); }
-  } else { wantPlay=false; audio.pause(); if(armed) try{ armed.el.pause(); }catch(e){} }
+  } else { wantPlay=false; audio.pause(); if(envRaf){ cancelAnimationFrame(envRaf); envRaf=0; } if(armed) try{ armed.el.pause(); }catch(e){} }
 };
 document.getElementById("next").onclick=()=>{ logSkip(); next(true); };
 document.getElementById("prev").onclick=()=>next(false);
@@ -595,13 +615,12 @@ const LSW="hilands_radio_seen_v1", ELW=document.getElementById("welcome");
 /* theme */
 const LST="hilands_radio_theme_v1";
 const SITE_URL="https://ilandswren-coder.github.io/hilands-radio/";  /* fixed public address, set at commit */
-function applyTheme(t){ const name=(t==="original"||t==="teal")?t:"lilac";
+function applyTheme(t){ const name=(t==="original"||t==="teal"||t==="vista")?t:"lilac";
   document.documentElement.dataset.theme = name;
-  document.querySelectorAll("#themes .lane").forEach(b=>b.classList.toggle("on", b.dataset.themeChoice === name));
+  const sel=document.getElementById("themeSel"); if(sel) sel.value=name;
   const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = name==="original" ? "#211b12" : name==="teal" ? "#e2f1ef" : "#ece3f8"; }
 applyTheme(localStorage.getItem(LST));
-document.getElementById("themes").onclick=(e)=>{ const b=e.target.closest("[data-theme-choice]"); if(!b) return;
-  const t=b.dataset.themeChoice; localStorage.setItem(LST,t); applyTheme(t); };
+document.getElementById("themeSel").onchange=(e)=>{ const t=e.target.value; localStorage.setItem(LST,t); applyTheme(t); };
 /* share */
 document.getElementById("share").onclick=async()=>{
   const url = SITE_URL || (location.origin + location.pathname);
@@ -686,6 +705,52 @@ document.querySelectorAll("#lanes .lane").forEach(x=>x.classList.toggle("on",x.d
 syncOpts(); rebuild(false); updateStats(); renderPlaylist();
 elTitle.textContent="Press play to start the shuffle.";
 elMaker.textContent="Hilands Radio"; elLink.innerHTML="";
+
+/* wave strip: real loudness envelope of the actual track, decoded via a val.town CORS proxy.
+   Playback itself stays on the direct URL and is untouched; if the proxy fails the strip just stays hidden. */
+const VIZ_PROXY="https://wrenquire--b8b53342cdd311f19b871607ee4eb77e.web.val.run/?u=";
+const elViz=document.getElementById("viz"); const vctx=elViz?elViz.getContext("2d"):null;
+const envCache={}; let envCur=null, envRaf=0;
+async function ensureEnv(t){
+  if(!t||!t.audio) return null;
+  if(envCache[t.id]) return envCache[t.id];
+  try{
+    const r=await fetch(VIZ_PROXY+encodeURIComponent(t.audio));
+    if(!r.ok) return null;
+    const ab=await r.arrayBuffer();
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return null;
+    const ac=new AC();
+    const buf=await ac.decodeAudioData(ab);
+    if(ac.close) try{ ac.close(); }catch(e){}
+    const hop=Math.max(1,Math.floor(buf.sampleRate*0.25)), ch=buf.getChannelData(0);
+    const n=Math.ceil(ch.length/hop), env=new Float32Array(n);
+    for(let i=0;i<n;i++){ let sm=0, cnt=0; const e=Math.min(i*hop+hop,ch.length);
+      for(let j=i*hop;j<e;j+=4){ sm+=ch[j]*ch[j]; cnt++; }
+      env[i]=Math.sqrt(sm/Math.max(1,cnt)); }
+    let mx=0; for(let i=0;i<n;i++) if(env[i]>mx) mx=env[i];
+    if(mx>0) for(let i=0;i<n;i++) env[i]=Math.pow(env[i]/mx,0.7);
+    envCache[t.id]=env; return env;
+  }catch(e){ return null; }
+}
+function vizColors(){
+  const st=getComputedStyle(document.documentElement);
+  return [ (st.getPropertyValue("--accent")||"").trim()||"#8b5cd6",
+           (st.getPropertyValue("--track")||"").trim()||"#dcd6ee" ];
+}
+function drawViz(){
+  envRaf=0; if(!vctx||!envCur) return;
+  const w=elViz.width,h=elViz.height,mid=h/2,bars=44,bw=w/bars;
+  vctx.clearRect(0,0,w,h);
+  let dur=0; try{ dur=audio.duration||0; }catch(e){}
+  const frac=dur?Math.min(1,(audio.currentTime||0)/dur):0;
+  const cut=Math.floor(frac*bars), cols=vizColors();
+  for(let b=0;b<bars;b++){
+    const v=Math.max(0.04,envCur[Math.min(envCur.length-1,b)])*(h/2-2);
+    vctx.fillStyle=b<cut?cols[0]:cols[1];
+    vctx.fillRect(b*bw+1,mid-v,Math.max(1,bw-2),v*2);
+  }
+  if(wantPlay&&!audio.paused) envRaf=requestAnimationFrame(drawViz);
+}
 </script>
 <script>if("serviceWorker" in navigator){window.addEventListener("load",()=>{navigator.serviceWorker.register("sw.js").catch(()=>{});});}</script>
 </body>
