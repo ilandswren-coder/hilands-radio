@@ -622,14 +622,16 @@ function applyTheme(t){ const name=(t==="original"||t==="teal"||t==="vista")?t:"
   document.documentElement.dataset.theme = name;
   const sel=document.getElementById("themeSel"); if(sel) sel.value=name;
   const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = name==="original" ? "#211b12" : name==="teal" ? "#e2f1ef" : name==="vista" ? "#0b0f18" : "#ece3f8";
-  /* the visualiser is a toggle, off by default */
-  const vz=document.getElementById("viz"); if(vz) vz.style.display = load(LSVZ,false)?"":"none";
-  const vzn=document.getElementById("viznote"); if(vzn) vzn.style.display = load(LSVZ,false)?"":"none"; }
+  /* the visualiser is a per-skin toggle: on by default on the Vista (WMP) skin, off elsewhere */
+  const vz=document.getElementById("viz"); if(vz) vz.style.display = vizOn(name)?"":"none";
+  const vzn=document.getElementById("viznote"); if(vzn) vzn.style.display = vizOn(name)?"":"none"; }
+function vizOn(name){ return load(LSVZ+"_"+name, name==="vista"); }
 applyTheme(localStorage.getItem(LST));
 document.getElementById("themeSel").onchange=(e)=>{ const t=e.target.value; localStorage.setItem(LST,t); applyTheme(t); };
 const elVizBtn=document.getElementById("vizbtn");
-function vizLabel(){ elVizBtn.textContent = "Visualiser: " + (load(LSVZ,false)?"on":"off"); }
-elVizBtn.onclick=(e)=>{ e.stopPropagation(); localStorage.setItem(LSVZ, !load(LSVZ,false)); applyTheme(localStorage.getItem(LST)); vizLabel(); };
+function vizLabel(){ elVizBtn.textContent = "Visualiser: " + (vizOn(currentSkin())?"on":"off"); }
+function currentSkin(){ const t=localStorage.getItem(LST); return (t==="original"||t==="teal"||t==="vista")?t:"lilac"; }
+elVizBtn.onclick=(e)=>{ e.stopPropagation(); const s=currentSkin(); localStorage.setItem(LSVZ+"_"+s, !vizOn(s)); applyTheme(s); vizLabel(); };
 vizLabel();
 /* share */
 document.getElementById("share").onclick=async()=>{
