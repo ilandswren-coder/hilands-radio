@@ -708,11 +708,13 @@ syncOpts(); rebuild(false); updateStats(); renderPlaylist();
 elTitle.textContent="Press play to start the shuffle.";
 elMaker.textContent="Hilands Radio"; elLink.innerHTML="";
 
-/* wave strip: real loudness envelope of the actual track, decoded via a val.town CORS proxy.
-   Playback itself stays on the direct URL and is untouched; if the proxy fails the strip just stays hidden. */
+/* wave strip: real loudness envelope of the actual track.
+   Envelopes are precomputed at crawl time into env.json (same origin); the runtime proxy is only a fallback. */
 const VIZ_PROXYS=["https://wrenquire--b8b53342cdd311f19b871607ee4eb77e.web.val.run/?u="];
-let VIZ_PROXY=null, vizFail="";
+let VIZ_PROXY=null, vizFail="", ENV={};
+fetch("env.json").then(r=>{ if(r.ok) return r.json(); }).then(j=>{ if(j) ENV=j; }).catch(()=>{});
 async function fetchEnvAudio(t){
+  if(ENV[t.id]) return ENV[t.id];
   const u=encodeURIComponent(t.audio);
   for(const p of VIZ_PROXYS){ try{ const r=await fetch(p+u); if(r.ok){ VIZ_PROXY=p; return await r.arrayBuffer(); } vizFail="proxy "+r.status; }catch(e){ vizFail="proxy blocked"; } }
   return null;
@@ -723,9 +725,10 @@ async function ensureEnv(t){
   if(!t||!t.audio) return null;
   if(envCache[t.id]) return envCache[t.id];
   try{
-    const ab=await fetchEnvAudio(t); if(!ab) return null;
+    const ab=await fetchEnvAudio(t); if(!ab) { if(!vizFail) vizFail="no envelope yet"; return null; }
     const AC=window.AudioContext||window.webkitAudioContext; if(!AC){ vizFail="no AudioContext"; return null; }
     const ac=new AC();
+    if(ab instanceof Float32Array){ envCache[t.id]=ab; if(ac.close) try{ ac.close(); }catch(e){} return ab; }
     const buf=await ac.decodeAudioData(ab);
     if(ac.close) try{ ac.close(); }catch(e){}
     const hop=Math.max(1,Math.floor(buf.sampleRate*0.25)), ch=buf.getChannelData(0);
