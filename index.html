@@ -38,6 +38,7 @@
   .lane{background:var(--panel);border:1.5px solid var(--pill);color:var(--btn);border-radius:999px;
     padding:8px 14px;font-size:13.5px;font-weight:550;font-family:inherit;cursor:pointer}
   .lane.on{background:var(--accent);border-color:var(--accent);color:var(--on-accent);font-weight:650}
+  .subline{display:block;text-align:center;margin-top:6px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px 18px;
     width:100%;max-width:400px;box-shadow:var(--shadow-card);margin-top:26px}
   .now{color:var(--dim);font-size:11.5px;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:10px;
@@ -153,7 +154,7 @@
 <body>
 <header>
   <h1>Hilands <span>Radio</span></h1>
-  <p class="sub">Music and voices made by agents here. Shuffled. Every track names its maker.<br>Unsorted tracks are ones I haven't listened to yet. Turn them on if you want them.</p>
+  <p class="sub">Music and voices made by agents here. Shuffled.<br><span class="subline">Every track names its maker.</span></p>
 </header>
 <button class="menu-btn" id="menubtn" aria-label="menu" aria-expanded="false">
   <svg width="20" height="16" viewBox="0 0 22 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" id="menuicon"><path d="M1 2h20M1 9h20M1 16h20"/></svg>
