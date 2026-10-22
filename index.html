@@ -25,6 +25,13 @@
     --btn-ink:#2b2317; --toast-bg:#352c1e; --text-soft:#8d8069; --dim2:#a89a80; --count:#958878;
     --warn-line:#8c6a58; --warn-ink:#f5ab84; --hl:#ffe98a;
     --shadow-card:0 12px 40px rgba(0,0,0,.35); --shadow-menu:0 18px 44px rgba(0,0,0,.55); --scrim:rgba(12,11,9,.9); }
+  html[data-theme="teal"]{ --bg:#e2f1ef; --panel:#f7fdfc; --ink:#123c38; --dim:#4f7a74; --btn:#1f5a54; --accent:#e8833a; --line:#c4ded9; --pill:#8fbcb5;
+    --on-accent:#ffffff; --glow:#eefaf7; --track:#cde6e2;
+    --link-who:#c96a24; --link-who-hi:#a34f14; --link-song:#1f7a8c; --link-song-hi:#14586a; --link-feat:#b0722e;
+    --star:#f0a01c; --star-glow:rgba(240,160,28,.45); --star-off:#9dbbb5; --star-off-hi:#6f938c;
+    --btn-ink:#fdfcf9; --toast-bg:#f4fbfa; --text-soft:#4f7a74; --dim2:#57837d; --count:#4f7a74;
+    --warn-line:#d99a72; --warn-ink:#b04a1e; --hl:#ffd9a8;
+    --shadow-card:0 12px 34px rgba(31,90,84,.16); --shadow-menu:0 18px 44px rgba(31,90,84,.24); --scrim:rgba(226,241,239,.95); }
   *{box-sizing:border-box}
   html,body{margin:0;min-height:100%}
   body{ background:radial-gradient(120% 90% at 50% -10%, var(--glow) 0%, var(--bg) 55%); color:var(--ink);
@@ -175,6 +182,7 @@
   <div class="lanes" id="themes">
     <button class="lane on" data-theme-choice="lilac">Lilac</button>
     <button class="lane" data-theme-choice="original">Original</button>
+    <button class="lane" data-theme-choice="teal">Teal</button>
   </div>
 </div>
 <div class="card">
@@ -587,11 +595,11 @@ const LSW="hilands_radio_seen_v1", ELW=document.getElementById("welcome");
 /* theme */
 const LST="hilands_radio_theme_v1";
 const SITE_URL="https://ilandswren-coder.github.io/hilands-radio/";  /* fixed public address, set at commit */
-function applyTheme(t){ const dark = (t==="original");
-  document.documentElement.dataset.theme = dark ? "original" : "lilac";
-  document.querySelectorAll("#themes .lane").forEach(b=>b.classList.toggle("on", b.dataset.themeChoice === (dark?"original":"lilac")));
-  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = dark ? "#211b12" : "#ece3f8"; }
-applyTheme(localStorage.getItem(LST) === "original" ? "original" : "lilac");
+function applyTheme(t){ const name=(t==="original"||t==="teal")?t:"lilac";
+  document.documentElement.dataset.theme = name;
+  document.querySelectorAll("#themes .lane").forEach(b=>b.classList.toggle("on", b.dataset.themeChoice === name));
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = name==="original" ? "#211b12" : name==="teal" ? "#e2f1ef" : "#ece3f8"; }
+applyTheme(localStorage.getItem(LST));
 document.getElementById("themes").onclick=(e)=>{ const b=e.target.closest("[data-theme-choice]"); if(!b) return;
   const t=b.dataset.themeChoice; localStorage.setItem(LST,t); applyTheme(t); };
 /* share */
