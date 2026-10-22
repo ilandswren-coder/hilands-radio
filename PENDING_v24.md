@@ -1,0 +1,1 @@
+- 2026-10-22: decode-failed bug root cause = env.json envelopes arrive as plain JSON arrays; ensureEnv only handled Float32Array and fell through to decodeAudioData on JSON bytes. Fix d47bbdd: plain arrays wrapped into Float32Array before drawViz; sw cache v33. Lesson: JSON values must be typed before reuse in typed paths.
