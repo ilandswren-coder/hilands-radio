@@ -207,6 +207,7 @@
   <div class="maker" id="maker">&mdash;</div>
   <div class="title" id="title">Press play.</div>
   <canvas id="viz" width="352" height="36" aria-hidden="true"></canvas>
+  <div id="viznote" style="font-size:10px;opacity:.55;margin:0 0 2px"></div>
 <div class="prog"><i id="bar"></i></div>
   <div class="times"><span id="tcur">0:00</span><span id="tdur">0:00</span></div>
   <div class="controls">
@@ -404,7 +405,8 @@ function playCurrent(){
   audio.src=t.audio; try{ audio.load(); }catch(e){}
   attemptPlay(); show();
   ensureEnv(t).then(e=>{ if(e && queue[idx]===t){ envCur=e; elViz.style.opacity=1;
-    if(!envRaf && wantPlay && !audio.paused) envRaf=requestAnimationFrame(drawViz); } });
+    if(!envRaf && wantPlay && !audio.paused) envRaf=requestAnimationFrame(drawViz); }
+    else if(!e && queue[idx]===t){ const n=document.getElementById("viznote"); if(n) n.textContent="visualiser unavailable this session ("+vizFail+")"; } });
   elBar.style.width="0%"; elCur.textContent="0:00";
 }
 function nextIx(fwd){
@@ -708,17 +710,21 @@ elMaker.textContent="Hilands Radio"; elLink.innerHTML="";
 
 /* wave strip: real loudness envelope of the actual track, decoded via a val.town CORS proxy.
    Playback itself stays on the direct URL and is untouched; if the proxy fails the strip just stays hidden. */
-const VIZ_PROXY="https://wrenquire--b8b53342cdd311f19b871607ee4eb77e.web.val.run/?u=";
+const VIZ_PROXYS=["https://wrenquire--b8b53342cdd311f19b871607ee4eb77e.web.val.run/?u="];
+let VIZ_PROXY=null, vizFail="";
+async function fetchEnvAudio(t){
+  const u=encodeURIComponent(t.audio);
+  for(const p of VIZ_PROXYS){ try{ const r=await fetch(p+u); if(r.ok){ VIZ_PROXY=p; return await r.arrayBuffer(); } vizFail="proxy "+r.status; }catch(e){ vizFail="proxy blocked"; } }
+  return null;
+}
 const elViz=document.getElementById("viz"); const vctx=elViz?elViz.getContext("2d"):null;
 const envCache={}; let envCur=null, envRaf=0;
 async function ensureEnv(t){
   if(!t||!t.audio) return null;
   if(envCache[t.id]) return envCache[t.id];
   try{
-    const r=await fetch(VIZ_PROXY+encodeURIComponent(t.audio));
-    if(!r.ok) return null;
-    const ab=await r.arrayBuffer();
-    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return null;
+    const ab=await fetchEnvAudio(t); if(!ab) return null;
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC){ vizFail="no AudioContext"; return null; }
     const ac=new AC();
     const buf=await ac.decodeAudioData(ab);
     if(ac.close) try{ ac.close(); }catch(e){}
@@ -730,7 +736,7 @@ async function ensureEnv(t){
     let mx=0; for(let i=0;i<n;i++) if(env[i]>mx) mx=env[i];
     if(mx>0) for(let i=0;i<n;i++) env[i]=Math.pow(env[i]/mx,0.7);
     envCache[t.id]=env; return env;
-  }catch(e){ return null; }
+  }catch(e){ vizFail="decode failed"; return null; }
 }
 function vizColors(){
   const st=getComputedStyle(document.documentElement);
