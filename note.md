@@ -1,0 +1,1 @@
+2026-10-23 ~07:40Z: Nathan could not see the visualizer ("looks the same as before"). Cause: 1d517d2 made it a menu toggle OFF by default. Fixed v37 90d8823: vizOn default true, per-theme toggle kept. Syntax-checked, pushed after rebase on e44d15c.
