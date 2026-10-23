@@ -77,7 +77,7 @@
   a.songtitle .go{color:var(--link-song);opacity:.75;margin-right:6px;font-size:12px}
   a.songtitle:hover{text-decoration:underline}
   a.mk.who{color:var(--link-who);font-weight:650}
-  #viz{display:block;width:100%;height:36px;margin:14px 0 2px;opacity:0;transition:opacity .4s}
+  #viz{display:block;width:100%;height:48px;margin:14px 0 2px;opacity:0;transition:opacity .4s}
   .prog{height:4px;background:var(--track);border-radius:3px;margin:15px 0 6px;overflow:hidden}
   .prog i{display:block;height:100%;width:0;background:var(--accent);border-radius:3px}
   .times{display:flex;justify-content:space-between;color:var(--dim);font-size:12px;font-variant-numeric:tabular-nums}
@@ -208,8 +208,8 @@
   <div class="now"><span id="nowlabel">now playing</span><span class="chip" id="kind">music</span></div>
   <div class="maker" id="maker">&mdash;</div>
   <div class="title" id="title">Press play.</div>
-  <canvas id="viz" width="352" height="36" aria-hidden="true"></canvas>
-  <div id="viznote" style="font-size:10px;opacity:.55;margin:0 0 2px"></div>
+  <canvas id="viz" width="352" height="48" aria-hidden="true"></canvas>
+  <div id="viznote" style="font-size:10px;opacity:.55;margin:0 0 2px">visualiser: <select id="vizmode" style="font-size:10px"><option value="wave">wave</option><option value="bars">bars</option><option value="live">live</option></select></div>
 <div class="prog"><i id="bar"></i></div>
   <div class="times"><span id="tcur">0:00</span><span id="tdur">0:00</span></div>
   <div class="controls">
@@ -791,7 +791,8 @@ elMaker.textContent="Hilands Radio"; elLink.innerHTML="";
    Envelopes are precomputed at crawl time into env.json (same origin); the runtime proxy is only a fallback. */
 const VIZ_PROXYS=["https://wrenquire--b8b53342cdd311f19b871607ee4eb77e.web.val.run/?u="];
 let VIZ_PROXY=null, vizFail="", ENV={};
-fetch("env.json").then(r=>{ if(r.ok) return r.json(); }).then(j=>{ if(j) ENV=j; }).catch(()=>{});
+const ENV_URL="https://pub-a941bfd863a24f91a60e6c4979c18a84.r2.dev/pi-sandbox-uploads/369585700275752960/2026-10-23/1792764933747-2df4ce74-950a-4173-8564-2943f069fc0a-env.json";
+fetch("env.json").then(r=>{ if(r.ok) return r.json(); throw 0; }).catch(()=>fetch(ENV_URL)).then(r=>{ if(r&&r.ok) return r.json(); }).then(j=>{ if(j) ENV=j; }).catch(()=>{});
 async function fetchEnvAudio(t){
   if(ENV[t.id]) return ENV[t.id];
   const u=encodeURIComponent(t.audio);
@@ -804,7 +805,11 @@ async function ensureEnv(t){
   if(!t||!t.audio) return null;
   if(envCache[t.id]) return envCache[t.id];
   const e0=ENV[t.id]; // env.json values are plain JSON arrays of 44 bars
-  if(e0){ const f=e0 instanceof Float32Array?e0:new Float32Array(e0); envCache[t.id]=f; return f; }
+  if(e0){ let f=e0 instanceof Float32Array?e0:new Float32Array(e0);
+    /* normalize to peak so volume changes actually read on the wave */
+    let mx=0; for(let i=0;i<f.length;i++) if(f[i]>mx) mx=f[i];
+    if(mx>0){ f=f.map(v=>v/mx); }
+    envCache[t.id]=f; return f; }
   try{
     const ab=await fetchEnvAudio(t); if(!ab) { if(!vizFail) vizFail="no envelope yet"; return null; }
     const AC=window.AudioContext||window.webkitAudioContext; if(!AC){ vizFail="no AudioContext"; return null; }
@@ -848,18 +853,36 @@ function vizColors(){
   return [ (st.getPropertyValue("--accent")||"").trim()||"#8b5cd6",
            (st.getPropertyValue("--track")||"").trim()||"#dcd6ee" ];
 }
+/* visualiser mode: wave (envelope oscilloscope), bars (v36-style), live (real-time spectrum).
+   user-picked in the viznote select, remembered per device. live falls back to wave when the
+   host doesn't answer the CORS probe. */
+let vizMode="wave"; try{ vizMode=localStorage.getItem("vizmode")||"wave"; }catch(e){}
+const elVizMode=document.getElementById("vizmode");
+if(elVizMode){ elVizMode.value=vizMode; elVizMode.addEventListener("change",()=>{ vizMode=elVizMode.value; try{ localStorage.setItem("vizmode",vizMode); }catch(e){} if(!envRaf&&wantPlay) envRaf=requestAnimationFrame(drawViz); }); }
+function drawBars(w,h,mid,cols){
+  const env=envCur,bars=44,bw=w/bars;
+  let dur=0; try{ dur=audio.duration||0; }catch(e){}
+  const frac=dur?Math.min(1,(audio.currentTime||0)/dur):0;
+  const cut=Math.floor(frac*bars);
+  for(let b=0;b<bars;b++){
+    const v=Math.max(0.04,env[Math.min(env.length-1,b)])*(h*0.75/2);
+    vctx.fillStyle=b<cut?cols[0]:cols[1];
+    vctx.fillRect(b*bw+1,mid-v,Math.max(1,bw-2),v*2);
+  }
+}
 function drawViz(){
   envRaf=0; if(!vctx||!envCur) return;
-  const w=elViz.width,h=elViz.height,mid=h/2,amp=h/2-3,bars=44;
+  const w=elViz.width,h=elViz.height,mid=h/2,amp=h*0.75/2,bars=44;
   vctx.clearRect(0,0,w,h);
   let dur=0; try{ dur=audio.duration||0; }catch(e){}
   const frac=dur?Math.min(1,(audio.currentTime||0)/dur):0;
   const cutX=frac*w, cols=vizColors();
+  if(vizMode==="bars"){ drawBars(w,h,mid,cols); if(wantPlay&&!audio.paused) envRaf=requestAnimationFrame(drawViz); return; }
   /* smooth oscilloscope wave: sample the envelope, interpolate, mirror around mid as a closed shape */
   const env=envCur, n=env.length, N=Math.max(64,Math.min(240,w/4));
   const val=x=>{ const p=x*(n-1)/N, i=Math.floor(p), f=p-i; const a=env[Math.min(i,n-1)], b=env[Math.min(i+1,n-1)]; return (a+(b-a)*f); };
   const top=[], bot=[];
-  if(vizAnalyser&&corsOK){
+  if(vizMode==="live"&&vizAnalyser&&corsOK){
     /* live: real-time frequency spectrum of the playing audio, mirrored around mid */
     try{
       const bins=new Uint8Array(vizAnalyser.frequencyBinCount);
