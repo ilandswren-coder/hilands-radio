@@ -693,7 +693,7 @@ function toast(msg, label, act){
   clearTimeout(el._t); el._t=setTimeout(()=>{ if(el.parentNode) el.remove(); },10000); }
 const LSW="hilands_radio_seen_v1", ELW=document.getElementById("welcome");
 /* theme */
-const LST="hilands_radio_theme_v1", LSVZ="hilands_radio_viz_v1";
+const LST="hilands_radio_theme_v1", LSVZ="hilands_radio_viz_v2";  /* v2: resets stale saved viz off-prefs from earlier tests, so vista defaults back to visualiser on */
 const SITE_URL="https://ilandswren-coder.github.io/hilands-radio/";  /* fixed public address, set at commit */
 function applyTheme(t){ const name=(t==="original"||t==="teal"||t==="vista")?t:"lilac";
   document.documentElement.dataset.theme = name;
