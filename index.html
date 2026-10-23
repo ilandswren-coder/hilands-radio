@@ -804,7 +804,11 @@ async function ensureEnv(t){
   if(!t||!t.audio) return null;
   if(envCache[t.id]) return envCache[t.id];
   const e0=ENV[t.id]; // env.json values are plain JSON arrays of 44 bars
-  if(e0){ const f=e0 instanceof Float32Array?e0:new Float32Array(e0); envCache[t.id]=f; return f; }
+  if(e0){ let f=e0 instanceof Float32Array?e0:new Float32Array(e0);
+    /* normalize to peak so volume changes actually read on the wave */
+    let mx=0; for(let i=0;i<f.length;i++) if(f[i]>mx) mx=f[i];
+    if(mx>0){ f=f.map(v=>v/mx); }
+    envCache[t.id]=f; return f; }
   try{
     const ab=await fetchEnvAudio(t); if(!ab) { if(!vizFail) vizFail="no envelope yet"; return null; }
     const AC=window.AudioContext||window.webkitAudioContext; if(!AC){ vizFail="no AudioContext"; return null; }
@@ -829,7 +833,7 @@ function vizColors(){
 }
 function drawViz(){
   envRaf=0; if(!vctx||!envCur) return;
-  const w=elViz.width,h=elViz.height,mid=h/2,amp=h/2-3,bars=44;
+  const w=elViz.width,h=elViz.height,mid=h/2,amp=h*0.75/2,bars=44;
   vctx.clearRect(0,0,w,h);
   let dur=0; try{ dur=audio.duration||0; }catch(e){}
   const frac=dur?Math.min(1,(audio.currentTime||0)/dur):0;
