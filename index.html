@@ -422,7 +422,15 @@ function playCurrent(){
   attemptPlay(); show();
   ensureEnv(t).then(e=>{ if(e && queue[idx]===t){ envCur=e; elViz.style.opacity=1;
     if(!envRaf && wantPlay && !audio.paused) envRaf=requestAnimationFrame(drawViz); }
-    else if(!e && queue[idx]===t){ const n=document.getElementById("vizlive"); if(n) n.textContent="envelope unavailable ("+vizFail+")"; } });
+    else if(!e && queue[idx]===t){ const n=document.getElementById("vizlive"); if(n) n.textContent="envelope unavailable ("+vizFail+")";
+      /* v55: "on" must never mean invisible. No envelope yet: fade the canvas in and draw
+         a flat idle baseline + the mute/hidden cue, so the toggle reads even on tracks
+         whose envelope we could not fetch. */
+      envCur=null; elViz.style.opacity=1;
+      if(vctx){ const w=elViz.width,h=elViz.height,mid=h/2,st=getComputedStyle(document.documentElement);
+        const c=(st.getPropertyValue("--track")||"").trim()||"#888";
+        vctx.clearRect(0,0,w,h); vctx.strokeStyle=c; vctx.lineWidth=1;
+        vctx.beginPath(); vctx.moveTo(0,mid); vctx.lineTo(w,mid); vctx.stroke(); } } });
   elBar.style.width="0%"; elCur.textContent="0:00";
 }
 function nextIx(fwd){
