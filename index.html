@@ -694,7 +694,7 @@ function applyTheme(t){ const name=(t==="original"||t==="teal"||t==="vista")?t:"
   /* the visualiser is a per-skin toggle: on by default on the Vista (WMP) skin, off elsewhere */
   const vz=document.getElementById("viz"); if(vz) vz.style.display = vizOn(name)?"":"none";
   const vzn=document.getElementById("viznote"); if(vzn) vzn.style.display = vizOn(name)?"":"none"; }
-function vizOn(name){ return load(LSVZ+"_"+name, name==="vista"); }
+function vizOn(name){ return load(LSVZ+"_"+name, true); }
 applyTheme(localStorage.getItem(LST));
 document.getElementById("themeSel").onchange=(e)=>{ const t=e.target.value; localStorage.setItem(LST,t); applyTheme(t); };
 const elVizBtn=document.getElementById("vizbtn");
