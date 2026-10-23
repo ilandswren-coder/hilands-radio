@@ -11,34 +11,41 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Radio">
 <style>
-  :root{ --bg:#ece3f8; --panel:#fdfbff; --ink:#2f2645; --dim:#6b5d85; --btn:#463a60; --accent:#8b5cd6; --line:#dbcdea; --pill:#bdaade;
+  :root{ --bg:#ece3f8; --searchpanel:#f2e9fa; --panel:#fdfbff; --ink:#2f2645; --dim:#6b5d85; --btn:#463a60; --accent:#8b5cd6; --line:#dbcdea; --pill:#bdaade;
     --on-accent:#ffffff; --glow:#f8f2ff; --track:#e3d8f2;
     --link-who:#7546bd; --link-who-hi:#55308c; --link-song:#3f74c8; --link-song-hi:#2a5aa0; --link-feat:#8a5a2b;
     --star:#e0a61c; --star-glow:rgba(224,166,28,.4); --star-off:#c3b5d8; --star-off-hi:#9481b3;
     --btn-ink:#fdfbff; --toast-bg:#fbf7ff; --text-soft:#5f5379; --dim2:#6b5d85; --count:#6b5d85;
     --warn-line:#c98a7a; --warn-ink:#a4402c; --hl:#ffe08a;
     --shadow-card:0 12px 34px rgba(90,63,140,.16); --shadow-menu:0 18px 44px rgba(90,63,140,.24); --scrim:rgba(236,227,248,.95); }
-  html[data-theme="original"]{ --bg:#211b12; --panel:#2b2317; --ink:#fbf3e3; --dim:#d3c4a8; --btn:#f0e3ca; --accent:#f0b463; --line:#7d6f57; --pill:#a89a80;
+  html[data-theme="original"]{ --bg:#211b12; --searchpanel:#231c11; --panel:#2b2317; --ink:#fbf3e3; --dim:#d3c4a8; --btn:#f0e3ca; --accent:#f0b463; --line:#7d6f57; --pill:#a89a80;
     --on-accent:#211b12; --glow:#332815; --track:#3a3122;
     --link-who:#f7b26a; --link-who-hi:#ffd39b; --link-song:#9ed4ff; --link-song-hi:#cbe8ff; --link-feat:#d18a35;
     --star:#ffd75c; --star-glow:rgba(255,215,92,.5); --star-off:#a89a80; --star-off-hi:#d3c4a8;
     --btn-ink:#2b2317; --toast-bg:#352c1e; --text-soft:#8d8069; --dim2:#a89a80; --count:#958878;
     --warn-line:#8c6a58; --warn-ink:#f5ab84; --hl:#ffe98a;
     --shadow-card:0 12px 40px rgba(0,0,0,.35); --shadow-menu:0 18px 44px rgba(0,0,0,.55); --scrim:rgba(12,11,9,.9); }
-  html[data-theme="teal"]{ --bg:#e2f1ef; --panel:#f7fdfc; --ink:#123c38; --dim:#4f7a74; --btn:#1f5a54; --accent:#e8833a; --line:#c4ded9; --pill:#8fbcb5;
+  html[data-theme="teal"]{ --bg:#e2f1ef; --searchpanel:#e7f2ef; --panel:#f7fdfc; --ink:#123c38; --dim:#4f7a74; --btn:#1f5a54; --accent:#e8833a; --line:#c4ded9; --pill:#8fbcb5;
     --on-accent:#ffffff; --glow:#eefaf7; --track:#cde6e2;
     --link-who:#c96a24; --link-who-hi:#a34f14; --link-song:#1f7a8c; --link-song-hi:#14586a; --link-feat:#b0722e;
     --star:#f0a01c; --star-glow:rgba(240,160,28,.45); --star-off:#9dbbb5; --star-off-hi:#6f938c;
     --btn-ink:#fdfcf9; --toast-bg:#f4fbfa; --text-soft:#4f7a74; --dim2:#57837d; --count:#4f7a74;
     --warn-line:#d99a72; --warn-ink:#b04a1e; --hl:#ffd9a8;
     --shadow-card:0 12px 34px rgba(31,90,84,.16); --shadow-menu:0 18px 44px rgba(31,90,84,.24); --scrim:rgba(226,241,239,.95); }
-  html[data-theme="vista"]{ --bg:#0b0f18; --panel:#151b28; --ink:#e6edf8; --dim:#93a4bd; --btn:#dfe8f5; --accent:#4aa3ff; --line:#33415c; --pill:#3d4d6b;
+  html[data-theme="vista"]{ --bg:#0b0f18; --searchpanel:#0e1420; --panel:#151b28; --ink:#e6edf8; --dim:#93a4bd; --btn:#dfe8f5; --accent:#4aa3ff; --line:#33415c; --pill:#3d4d6b;
     --on-accent:#081018; --glow:#16233c; --track:#26314a;
     --link-who:#7db8ff; --link-who-hi:#a8ccff; --link-song:#58b0e8; --link-song-hi:#8ecbf5; --link-feat:#8fa8c8;
     --star:#6fb1ff; --star-glow:rgba(111,177,255,.45); --star-off:#3d4d6b; --star-off-hi:#5a6f96;
     --btn-ink:#081018; --toast-bg:#151b28; --text-soft:#93a4bd; --dim2:#8496b3; --count:#93a4bd;
     --warn-line:#7a5a3a; --warn-ink:#e0a060; --hl:#26405f;
     --shadow-card:0 14px 38px rgba(0,0,0,.55); --shadow-menu:0 20px 48px rgba(0,0,0,.6); --scrim:rgba(11,15,24,.95); }
+  html[data-theme="cherry"]{ --bg:#170407; --searchpanel:#1c060a; --panel:#260910; --ink:#f7e8ea; --dim:#c39aa0; --btn:#f2d5d8; --accent:#e0304f; --line:#5c2028; --pill:#7a2a35;
+    --on-accent:#1a0508; --glow:#560f1c; --track:#3a1018;
+    --link-who:#ff8f9e; --link-who-hi:#ffb8c2; --link-song:#ff9db8; --link-song-hi:#ffc4d2; --link-feat:#d18a5a;
+    --star:#ff5c72; --star-glow:rgba(255,92,114,.45); --star-off:#7a2a35; --star-off-hi:#a8505e;
+    --btn-ink:#260910; --toast-bg:#2e0b12; --text-soft:#c39aa0; --dim2:#b58b91; --count:#b58b91;
+    --warn-line:#8c4a3a; --warn-ink:#f0a084; --hl:#ffb86b;
+    --shadow-card:0 12px 40px rgba(0,0,0,.5); --shadow-menu:0 18px 46px rgba(0,0,0,.65); --scrim:rgba(23,4,7,.93); }
   html[data-theme="vista"] .card{position:relative;overflow:hidden;border:1px solid rgba(120,160,220,.35);
     background:linear-gradient(180deg,#26324b 0%,#111827 42%,#0a0f19 100%)}
   html[data-theme="vista"] .card::before{content:"";position:absolute;left:0;right:0;top:0;height:42%;
@@ -155,7 +162,7 @@
   .pshead{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--panel);border-bottom:1px solid var(--line);position:relative;z-index:2;box-shadow:0 4px 14px rgba(0,0,0,.18);border-radius:16px 16px 0 0}
   .pshead strong{font-size:16px;font-weight:650}
   .pslist{flex:6 1 0;min-height:0;overflow-y:auto;padding:12px 14px}
-  .pssearch{flex:4 1 0;min-height:0;display:flex;flex-direction:column;border-top:1px solid var(--line);padding:10px 14px 12px;background:var(--panel)}
+  .pssearch{flex:4 1 0;min-height:0;display:flex;flex-direction:column;border-top:1px solid var(--line);padding:10px 14px 12px;background:var(--searchpanel,var(--panel))}
   .pssearch .searchbody{flex:1 1 auto;min-height:0;overflow-y:auto}
   .sortbtn{font-family:inherit;font-size:11.5px;border:1.5px solid var(--pill);background:none;color:var(--btn);border-radius:999px;padding:4px 11px;cursor:pointer;white-space:nowrap}
   .frow{padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer;border-radius:8px}
@@ -214,6 +221,7 @@
       <option value="original">Original</option>
       <option value="teal">Teal</option>
       <option value="vista">Vista (WMP)</option>
+      <option value="cherry">Black Cherry</option>
     </select>
   </div>
 </div>
@@ -711,10 +719,10 @@ const LSW="hilands_radio_seen_v1", ELW=document.getElementById("welcome");
 /* theme */
 const LST="hilands_radio_theme_v1", LSVZ="hilands_radio_viz_v2";  /* v2: resets stale saved viz off-prefs from earlier tests, so vista defaults back to visualiser on */
 const SITE_URL="https://ilandswren-coder.github.io/hilands-radio/";  /* fixed public address, set at commit */
-function applyTheme(t){ const name=(t==="original"||t==="teal"||t==="vista")?t:"lilac";
+function applyTheme(t){ const name=(t==="original"||t==="teal"||t==="vista"||t==="cherry")?t:"lilac";
   document.documentElement.dataset.theme = name;
   const sel=document.getElementById("themeSel"); if(sel) sel.value=name;
-  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = name==="original" ? "#211b12" : name==="teal" ? "#e2f1ef" : name==="vista" ? "#0b0f18" : "#ece3f8";
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = name==="original" ? "#211b12" : name==="teal" ? "#e2f1ef" : name==="vista" ? "#0b0f18" : name==="cherry" ? "#170407" : "#ece3f8";
   /* the visualiser is a per-skin toggle: on by default on the Vista (WMP) skin, off elsewhere */
   const vz=document.getElementById("viz"); if(vz) vz.style.display = vizOn(name)?"":"none";
   const vzn=document.getElementById("viznote"); if(vzn) vzn.style.display = vizOn(name)?"":"none"; }
@@ -723,7 +731,7 @@ applyTheme(localStorage.getItem(LST));
 document.getElementById("themeSel").onchange=(e)=>{ const t=e.target.value; localStorage.setItem(LST,t); applyTheme(t); };
 const elVizBtn=document.getElementById("vizbtn");
 function vizLabelFn(){ elVizBtn.textContent = "Visualiser: " + (vizOn(currentSkin())?"on":"off"); }
-function currentSkin(){ const t=localStorage.getItem(LST); return (t==="original"||t==="teal"||t==="vista")?t:"lilac"; }
+function currentSkin(){ const t=localStorage.getItem(LST); return (t==="original"||t==="teal"||t==="vista"||t==="cherry")?t:"lilac"; }
 elVizBtn.onclick=(e)=>{ e.stopPropagation(); const s=currentSkin(); localStorage.setItem(LSVZ+"_"+s, !vizOn(s)); applyTheme(s); vizLabelFn(); };
 vizLabelFn();
 /* share */
