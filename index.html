@@ -829,16 +829,28 @@ function vizColors(){
 }
 function drawViz(){
   envRaf=0; if(!vctx||!envCur) return;
-  const w=elViz.width,h=elViz.height,mid=h/2,bars=44,bw=w/bars;
+  const w=elViz.width,h=elViz.height,mid=h/2,amp=h/2-3,bars=44;
   vctx.clearRect(0,0,w,h);
   let dur=0; try{ dur=audio.duration||0; }catch(e){}
   const frac=dur?Math.min(1,(audio.currentTime||0)/dur):0;
-  const cut=Math.floor(frac*bars), cols=vizColors();
-  for(let b=0;b<bars;b++){
-    const v=Math.max(0.04,envCur[Math.min(envCur.length-1,b)])*(h/2-2);
-    vctx.fillStyle=b<cut?cols[0]:cols[1];
-    vctx.fillRect(b*bw+1,mid-v,Math.max(1,bw-2),v*2);
-  }
+  const cutX=frac*w, cols=vizColors();
+  /* smooth oscilloscope wave: sample the envelope, interpolate, mirror around mid as a closed shape */
+  const env=envCur, n=env.length, N=Math.max(64,Math.min(240,w/4));
+  const val=x=>{ const p=x*(n-1)/N, i=Math.floor(p), f=p-i; const a=env[Math.min(i,n-1)], b=env[Math.min(i+1,n-1)]; return (a+(b-a)*f); };
+  const top=[], bot=[];
+  for(let i=0;i<=N;i++){ const v=Math.max(0.045,val(i))*amp, x=i*w/N; top.push([x,mid-v]); bot.push([x,mid+v]); }
+  const wave=(pts)=>{ vctx.beginPath(); vctx.moveTo(pts[0][0],pts[0][1]);
+    for(let i=1;i<pts.length;i++){ const p0=pts[i-1],p1=pts[i],cx=(p0[0]+p1[0])/2; vctx.bezierCurveTo(cx,p0[1],cx,p1[1],p1[0],p1[1]); }
+    for(let i=pts.length-1;i>=0;i--){ const p0=pts[i===pts.length-1?i:i+1]||pts[i],p1=pts[i],cx=(p0[0]+p1[0])/2; vctx.bezierCurveTo(cx,p0[1],cx,p1[1],p1[0],p1[1]); }
+    vctx.closePath(); };
+  /* past portion (accent) clipped at playhead, then the full muted wave under it */
+  const paint=(color,clipW)=>{ vctx.save(); if(clipW!=null){ vctx.beginPath(); vctx.rect(0,0,clipW,h); vctx.clip(); }
+    wave(top); for(let i=bot.length-1;i>=0;i--) vctx.lineTo(bot[i][0],bot[i][1]); vctx.closePath();
+    vctx.fillStyle=color; vctx.fill(); vctx.restore(); };
+  paint(cols[1], null);
+  if(cutX>0) paint(cols[0], cutX);
+  /* playhead line */
+  if(cutX>0&&cutX<w){ vctx.strokeStyle=cols[0]; vctx.lineWidth=1; vctx.beginPath(); vctx.moveTo(cutX,mid-amp); vctx.lineTo(cutX,mid+amp); vctx.stroke(); }
   if(wantPlay&&!audio.paused) envRaf=requestAnimationFrame(drawViz);
 }
 </script>
