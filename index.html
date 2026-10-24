@@ -864,7 +864,8 @@ elMaker.textContent="Hilands Radio"; elLink.innerHTML="";
 const VIZ_PROXYS=["https://wrenquire--b8b53342cdd311f19b871607ee4eb77e.web.val.run/?u="];
 let VIZ_PROXY=null, vizFail="", ENV={};
 const ENV_URL="https://pub-a941bfd863a24f91a60e6c4979c18a84.r2.dev/pi-sandbox-uploads/369585700275752960/2026-10-23/1792764933747-2df4ce74-950a-4173-8564-2943f069fc0a-env.json";
-fetch("env.json").then(r=>{ if(r.ok) return r.json(); throw 0; }).catch(()=>fetch(ENV_URL)).then(r=>{ if(r&&r.ok) return r.json(); }).then(j=>{ if(j) ENV=j; }).catch(()=>{});
+fetch("env.json").then(r=>{ if(!r.ok) throw 0; return r.json(); }).then(j=>{ if(j) ENV=j; })
+  .catch(()=>fetch(ENV_URL).then(r=>{ if(!r.ok) throw 0; return r.json(); }).then(j=>{ if(j) ENV=j; }).catch(()=>{}));
 async function fetchEnvAudio(t){
   if(ENV[t.id]) return ENV[t.id];
   const u=encodeURIComponent(t.audio);
