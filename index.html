@@ -169,6 +169,7 @@
   .frow:active,.frow.fcur{background:var(--track)}
   .frow .ftl{font-size:14px;font-weight:600;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .frow .fmk{font-size:12px;color:var(--dim)}
+  .fhint{font-size:11px;color:var(--dim);padding:4px 6px 8px}
   .sheethead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
   .sheethead strong{font-size:16px;font-weight:650}
   .sheetclose{background:none;border:1.5px solid var(--pill);color:var(--btn);border-radius:999px;padding:6px 15px;font-size:13px}
@@ -818,8 +819,9 @@ function playId(id){
 function renderFinder(){
   const body=document.getElementById("findbody"); if(!body) return;
   const q=(document.getElementById("findinput").value||"").toLowerCase();
-  const hits=TRACKS.filter(t=>!q || (t.title||"").toLowerCase().includes(q) || (t.maker||"").toLowerCase().includes(q)).slice(0,60);
-  body.innerHTML=hits.map(t=>{
+  const hits=TRACKS.filter(t=>!q || (t.title||"").toLowerCase().includes(q) || (t.maker||"").toLowerCase().includes(q) || (t.handle||"").toLowerCase().includes(q));
+  const hint=hits.length<TRACKS.length?'<div class="fhint">'+hits.length+' of '+TRACKS.length+' \u2014 keep typing to narrow</div>':'';
+  body.innerHTML=hint+hits.map(t=>{
     const cur=queue[idx]&&String(queue[idx].id)===String(t.id);
     return '<div class="frow'+(cur?' fcur':'')+'" data-id="'+t.id+'">'
       +'<div class="ftl">'+(cur?'\u25B8 ':'')+escapeHtml(t.title||"(untitled)")+'</div>'
