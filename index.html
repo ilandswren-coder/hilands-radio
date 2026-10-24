@@ -292,7 +292,20 @@
   </div>
 </div>
 <div class="feedback">Something broken, or a track I should hear? <a href="mailto:wren-807@ilands.app">wren-807@ilands.app</a></div>
-<div class="feedback">Made a song? It might not be in the station yet. Drop your link in a report and I'll fetch it in.</div>
+<div class="feedback">Made a song? It might not be in the station yet. <a href="#" id="addlink">Add it here</a> — title, maker, and the mp3 link, and I'll fetch it in.</div>
+<div class="sheet" id="addsheet">
+  <div class="psheet">
+    <div class="pshead"><strong>Add a track</strong><button class="sheetclose" id="addclose">close</button></div>
+    <div class="pslist" style="padding:14px 16px;font-size:14px;line-height:1.5">
+      <p style="margin:0 0 10px;color:var(--dim)">For makers whose song isn't in the station yet. I read every add and fetch the track in myself.</p>
+      <input id="addtitle" type="text" placeholder="track title" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:14px;margin-bottom:8px">
+      <input id="addmaker" type="text" placeholder="your name on iLands" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:14px;margin-bottom:8px">
+      <input id="addmedia" type="text" placeholder="mp3 or content link (optional but helps)" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:14px;margin-bottom:8px">
+      <button class="fix" id="addsend" style="width:100%">Send it to Wren</button>
+      <div class="sheetfoot" id="addfoot">Lands in my add sheet, no email in the path.</div>
+    </div>
+  </div>
+</div>
 <div class="stats" id="stats"></div>
 <audio id="audio" preload="none"></audio>
 <audio id="audio2" preload="auto"></audio>
@@ -611,6 +624,33 @@ function queueReport(t,label,holdMs){
   return {row, cancel(){ if(tm) clearTimeout(tm); rq = rq.filter(r=>r!==row); localStorage.setItem(LSQ,JSON.stringify(rq)); }}; }
 window.addEventListener("online",flushReports);
 setTimeout(flushReports,1200);
+// ---- Add-a-track door (v64): makers add a track that never made the crawl.
+// Same exec, op=add -> lands in the "tracks to add" sheet tab.
+let aq = [];
+function flushAdds(){ if(!aq.length) return;
+  const one = aq[0];
+  if(one.retryAt && Date.now() < one.retryAt) return;
+  const p=new URLSearchParams({op:"add", title:String(one.title||""), maker:String(one.maker||""), contentId:String(one.contentId||""), mediaUrl:String(one.mediaUrl||""), device:String(one.device||"")});
+  fetch(REPORT_URL+"?"+p,{method:"GET",redirect:"follow"})
+    .then(r=>r.text())
+    .then(s=>{ if(String(s).trim()==="ok"){ aq.shift(); if(aq.length) setTimeout(flushAdds,400); }
+      else { one.tries=(one.tries||0)+1; one.retryAt=Date.now()+Math.min(300000,60000*one.tries); } })
+    .catch(()=>{ one.tries=(one.tries||0)+1; one.retryAt=Date.now()+Math.min(300000,60000*one.tries); }); }
+function queueAdd(t){ aq.push(t); flushAdds(); }
+document.getElementById("addlink").onclick=(e)=>{ e.preventDefault(); document.getElementById("addsheet").classList.add("open"); };
+document.getElementById("addclose").onclick=()=>document.getElementById("addsheet").classList.remove("open");
+document.getElementById("addsend").onclick=()=>{
+  const title=document.getElementById("addtitle").value.trim();
+  const maker=document.getElementById("addmaker").value.trim();
+  const media=document.getElementById("addmedia").value.trim();
+  const foot=document.getElementById("addfoot");
+  if(!title || !maker){ foot.textContent="A title and your name, both, so I know what to fetch and who made it."; return; }
+  queueAdd({title:title, maker:maker, contentId:"", mediaUrl:media, device:DEV});
+  foot.textContent="Sent. Thank you \u2014 I'll read it and fetch the track in.";
+  document.getElementById("addtitle").value=""; document.getElementById("addmaker").value=""; document.getElementById("addmedia").value="";
+};
+window.addEventListener("online",flushAdds);
+
 // ---- global star ratings (v35) ----------------------------------------------
 // Star taps also land in the "stars" tab of the same sheet, one row per tap.
 // The page reads the tab back with JSONP and averages it per track, latest
