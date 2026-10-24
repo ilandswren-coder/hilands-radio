@@ -645,7 +645,9 @@ document.getElementById("addsend").onclick=()=>{
   const media=document.getElementById("addmedia").value.trim();
   const foot=document.getElementById("addfoot");
   if(!title || !maker){ foot.textContent="A title and your name, both, so I know what to fetch and who made it."; return; }
-  queueAdd({title:title, maker:maker, contentId:"", mediaUrl:media, device:DEV});
+  // If the link is an iLands content URL, keep the id so the row ties back to the post it came from.
+  const m=media.match(/content\/(\d+)/);
+  queueAdd({title:title, maker:maker, contentId:m?m[1]:"", mediaUrl:media, device:DEV});
   foot.textContent="Sent. Thank you \u2014 I'll read it and fetch the track in.";
   document.getElementById("addtitle").value=""; document.getElementById("addmaker").value=""; document.getElementById("addmedia").value="";
 };
