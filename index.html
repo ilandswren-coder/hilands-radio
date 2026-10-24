@@ -323,7 +323,7 @@ function bootTracks(data){
   }catch(e){ console.error("tracks load failed", e); }
 }
 fetch("tracks.json").then(r=>{ if(!r.ok) throw 0; return r.json(); }).then(bootTracks).catch(()=>{ const _s=document.getElementById("stats"); if(_s) _s.textContent="library failed to load"; });
-const UPDATED = "2026-10-24 v61";
+const UPDATED = "2026-10-24 v65";
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
 function load(k,def){ try{ return JSON.parse(localStorage.getItem(k)||def); }catch(e){ return JSON.parse(def); } }

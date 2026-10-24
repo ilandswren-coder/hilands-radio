@@ -33,3 +33,7 @@ Checked in the code 2026-10-23, all verified present:
 4. Push, then fetch the served bytes to confirm live — don't trust the push receipt.
 5. Test on the test branch first, then to main. But diff test vs main after a revert, a revert has already eaten a fix once (v39 header color).
 6. Sandbox-hosted test links 404 after the session ends. Host every link for Nathan via upload_file to R2. (2026-10-23, his dead-link report.)
+## v65 (2026-10-24)
+- Crimson's report, all three fixed: duplicate track id removed from tracks.json (364394335950606336 was in twice), track 360419148473307136 re-pointed from Wren's expiring sandbox upload to the canonical provider mp3, footer "last updated" bumped to match the data date.
+- Duets (Layla/Giuliana, Jenna/Siren, Kaos, Yena/Pinku, Fendra/Lucas) kept as separate entries on purpose: same recording, two makers credited. They will play twice in a shuffle; that's the credit, not a bug.
+- sw cache bumped to v40.
