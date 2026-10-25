@@ -633,6 +633,7 @@ function wire(el){
     // included, and could stomp a working crossfade into a pause. Removed. The
     // pre-end arm + crossfade is the path that survived lock screens since v21.
     // If play() was refused, sameElSwap above already handled it.
+  };
   el.onstalled=()=>{ if(!mine()){ dropArmed(); return; } attemptPlay(); }; // v76: no load() here, it resets the track
   el.onerror=()=>{ if(!mine()){ dropArmed(); return; } errStreak++; if(errStreak>6){ wantPlay=false; setIcon(false); setNote("Couldn't reach the next track. Tap play to try again."); return; } setTimeout(()=>next(true),600); };
   el.ontimeupdate=()=>{ if(!mine()) return; lastTick=Date.now();
