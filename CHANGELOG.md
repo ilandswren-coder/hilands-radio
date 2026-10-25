@@ -50,3 +50,8 @@ Checked in the code 2026-10-23, all verified present. Updated 2026-10-24 (v66):
 
 ## v85 (2026-10-25): pre-end swap for lock-screen pause
 Nathan: still paused on lock screen even with v84 fix and PWA installed. Diagnosis: browsers refuse new sound AFTER the ended event fires. Fix: in timeupdate, at rem<=0.45s, swap the next track src into the still-playing element (sameElSwap) instead of ever letting ended fire — browser sees one continuous playback. Covers both the refused crossfade case and the never-armed case. sw v57.
+
+## v86b (2026-10-25, commit f3a10f2)
+- v86 truncated the `el.onended` handler (dropped closing brace during the retry-stack removal). Whole main script failed to parse: no tracks, no play, no version line.
+- Fix: restored the brace. Headless-verified: 1,992 tracks load, play + next run, no page errors.
+- Lesson: run `node --check` on the extracted script BEFORE every push, not after.
