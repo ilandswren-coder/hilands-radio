@@ -284,7 +284,7 @@
 </div>
 <div class="sheet" id="sheet">
   <div class="psheet">
-    <div class="pshead"><strong>Playlist/Search</strong><button class="sheetclose" id="sheetclose">close</button></div>
+    <div class="pshead"><strong>Playlist/Search</strong><button class="sheetclose" id="bkrestore" style="margin-right:6px">restore</button><button class="sheetclose" id="bkbackup" style="margin-right:6px">back up</button><button class="sheetclose" id="sheetclose">close</button></div>
     <div class="pslist" id="sheetbody"></div>
     <div class="pssearch">
       <input id="findinput" type="text" placeholder="search every track in the station&hellip;" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:14px;margin-bottom:6px">
@@ -622,6 +622,22 @@ function menuSet(on){ MENU.classList.toggle("open",on); MBTN.classList.toggle("o
 MBTN.onclick=(e)=>{ e.stopPropagation(); menuSet(!MENU.classList.contains("open")); };
 document.addEventListener("click",e=>{ if(MENU.classList.contains("open") && !MENU.contains(e.target) && e.target!==MBTN && !MBTN.contains(e.target)) menuSet(false); });
 document.getElementById("listbtn").onclick=()=>{ menuSet(false); openSheet(); };
+// v73 backup/restore: stars + saved list download as one small JSON file, so a
+// site-data wipe (uninstall, clear & reset) stops taking his taste with it.
+document.getElementById("bkbackup").onclick=()=>{
+  const blob=new Blob([JSON.stringify({v:1, when:new Date().toISOString(), stars:stars, saved:saved},null,1)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob); a.download="hilands-radio-backup.json"; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+};
+document.getElementById("bkrestore").onclick=()=>{
+  const inp=document.createElement("input"); inp.type="file"; inp.accept="application/json";
+  inp.onchange=()=>{ const f=inp.files[0]; if(!f) return;
+    f.text().then(txt=>{ try{ const j=JSON.parse(txt);
+      if(j && j.stars && typeof j.stars==="object"){ stars=j.stars; localStorage.setItem(LS,JSON.stringify(stars)); }
+      if(j && Array.isArray(j.saved)){ saved=j.saved.filter(x=>typeof x==="string"); localStorage.setItem(LSS,JSON.stringify(saved)); }
+      if(typeof renderPlaylist==="function") renderPlaylist(); show(); foot.textContent="Restored. Stars and saved list are back on this device.";
+    }catch(e){ foot.textContent="That file didn't read as a radio backup."; } }); };
+  inp.click();
+};
 document.getElementById("sheetclose").onclick=closeSheet;
 document.getElementById("sheet").addEventListener("click",e=>{ if(e.target.id==="sheet") closeSheet(); });
 document.getElementById("plexit").onclick=(e)=>{ e.preventDefault(); setPlMode(false); };
