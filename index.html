@@ -405,7 +405,7 @@ function logSkip(){ const t=queue[idx]; if(!t) return;
   if(!playCounted){ playCounted=true; logPlay(t); }   // leaving counts as a play
   const p = plays[t.id] || {p:0,s:0}; p.s++; plays[t.id]=p; savePlays();
   skippedThisPlay=true; }
-function keyed(){ return plPool().map(t=>[Math.pow(Math.random(),1/weight(t)),t]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]); }
+function keyed(){ return plPool().map(t=>[Math.pow(Math.random(),1/Math.min(weight(t),1.6)),t]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]); }
 let queue=keyed(), idx=0, wantPlay=false, errStreak=0, lastTick=Date.now();
 let userPause=false; // v76: true only when the listener (or their lockscreen button) meant to stop
 function fmt(s){ if(!isFinite(s)||!s) return "0:00"; const m=Math.floor(s/60), r=Math.floor(s%60); return m+":"+(r<10?"0":"")+r; }
