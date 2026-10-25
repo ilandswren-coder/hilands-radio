@@ -350,7 +350,7 @@ function loadTracks(){
 }
 loadTracks();
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") loadTracks(); });
-const UPDATED = "2026-10-25 v78 beta";
+const UPDATED = "2026-10-25 v79 beta";
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
 function load(k,def){ try{ return JSON.parse(localStorage.getItem(k)||def); }catch(e){ return JSON.parse(def); } }
@@ -528,6 +528,7 @@ function next(fwd=true){
   const cur=queue[idx];
   if(cur) recentLeft[cur.id]={at:Date.now(), s:skippedThisPlay};
   if(fwd){ idx++; if(idx>=queue.length){ queue=keyed(); idx=0; } } else { if(idx>0) idx--; else { queue=keyed(); idx=0; } }
+  lastSwap=Date.now();
   playCurrent();
 }
 elPlay.onclick=()=>{
@@ -548,7 +549,7 @@ document.getElementById("resume").onclick=()=>{ setResume(false); attemptPlay();
 // ahead of time, then started while the current one is still playing, and the
 // two are crossfaded. If the page gets no tick near the boundary at all, the
 // plain ended -> next() path still runs as the fallback.
-let armed=null, FADE=3.0;
+let armed=null, FADE=3.0, lastSwap=0; // v79: self-heal stays clear of the boundary for 10s after a swap
 function peekNext(){ return nextIx(true); }
 function armBuffered(){
   if(armed || !wantPlay) return;
@@ -574,6 +575,7 @@ function finishSwap(){
   audio=a.el; idx=a.i;
   try{ setVol(audio,1,t); }catch(e){}
   playCounted=false; skippedThisPlay=false; enteredAt=Date.now(); wantPlay=true;
+  lastSwap=Date.now();
   lastTick=Date.now(); setIcon(true); setResume(false); show();
   if(t) document.title=(t.title||"Hilands Radio")+" \u00b7 "+((t.maker)||"")+" \u2014 Hilands Radio";
   return true;
@@ -586,9 +588,9 @@ function wire(el){
   el.onpause=()=>{ if(!mine()) return; setIcon(false); ms("playbackState","paused");
     // v76: a pause nobody asked for (buffer underrun, OS audio focus, backgrounded
     // play() drop) is retried, twice, so the radio self-heals instead of sitting silent.
-    if(wantPlay && !userPause && !el.ended){
-      setTimeout(()=>{ if(wantPlay && el.paused && !userPause) attemptPlay(); }, 700);
-      setTimeout(()=>{ if(wantPlay && el.paused && !userPause) attemptPlay(); }, 2500);
+    if(wantPlay && !userPause && !el.ended && Date.now()-lastSwap>10000){
+      setTimeout(()=>{ if(wantPlay && el.paused && !userPause && Date.now()-lastSwap>10000) attemptPlay(); }, 700);
+      setTimeout(()=>{ if(wantPlay && el.paused && !userPause && Date.now()-lastSwap>10000) attemptPlay(); }, 2500);
     }
   };
   el.onended=()=>{ if(!mine()) return;
@@ -598,7 +600,9 @@ function wire(el){
     // backgrounded or the screen is off (no gesture, timers frozen). Retry the
     // handoff a few times; only give up to a visible note, never to silence.
     const retryHandoff=()=>{ if(!wantPlay||userPause||!audio.paused) return;
-      if(audio.ended||!audio.currentSrc) playCurrent(); else attemptPlay(); };
+      if(audio.ended||!audio.currentSrc) playCurrent();
+      else if(Date.now()-lastSwap>10000) attemptPlay();
+      else { try{ audio.load(); }catch(e){} setTimeout(()=>{ if(wantPlay&&!userPause&&audio.paused) attemptPlay(); },300); } }; // v79: fresh load first, like the pre-v76 path that worked
     [1500,4000,8000].forEach(t=>setTimeout(()=>{ retryHandoff();
       if(wantPlay&&!userPause&&audio.paused&&(audio.ended||!audio.currentSrc)){ setNote("The next track wouldn't start on its own. Tap play to keep the radio going."); setResume(true); } },t)); };
   el.onstalled=()=>{ if(!mine()){ dropArmed(); return; } attemptPlay(); }; // v76: no load() here, it resets the track
@@ -623,7 +627,7 @@ function wire(el){
 let posTick=0;
 wire(audio); wire(A2);
 setInterval(()=>{ if(wantPlay && !audio.paused && Date.now()-lastTick>15000){ lastTick=Date.now(); attemptPlay(); } // v76: no load(), it restarts the track
-  if(wantPlay && audio.paused && !userPause && Date.now()-lastTick>7000){ // v78: stuck-pause heal, sooner, position kept
+  if(wantPlay && audio.paused && !userPause && Date.now()-lastSwap>10000 && Date.now()-lastTick>7000){ // v78 heal, v79: not within 10s of a swap
     lastTick=Date.now();
     if(audio.currentSrc && audio.currentTime>0 && !audio.ended) attemptPlay(); else playCurrent();
   }
