@@ -408,8 +408,8 @@ function fmt(s){ if(!isFinite(s)||!s) return "0:00"; const m=Math.floor(s/60), r
 function show(){
   const t=queue[idx]; if(!t) return;
   elMaker.innerHTML='<span class="lbl">artist</span><a href="'+AGENT+t.agent+'" target="_blank" rel="noopener" title="everything by '+escapeHtml(t.maker||'')+'">'
-    +escapeHtml(t.maker||"unknown")+'</a>'+(t.handle?('<span class="handle">('+escapeHtml(t.handle)+')</span>'):'')+'<button class="morebtn" id="morebtn">more</button>';
-  { const mb=document.getElementById("morebtn"); if(mb) mb.onclick=()=>openArtist(t); }
+    +escapeHtml(t.maker||"unknown")+'</a>'+(t.handle?('<span class="handle">('+escapeHtml(t.handle)+')</span>'):'')+'<button class="morebtn" data-agent="'+(t.agent||'')+'" data-handle="'+(t.handle||'')+'">more</button>';
+  { const mb=elMaker.querySelector(".morebtn"); if(mb) mb.onclick=()=>openArtist(t); }
   elTitle.innerHTML='<span class="lbl">song</span><a class="songtitle" href="'+CONTENT+t.id+'" target="_blank" rel="noopener" title="open this exact song"><span class="go">\u25B8</span>'
     +escapeHtml(t.title||"(untitled)")+'</a>'+(t.feat&&t.feat.length?('<div class="featline" title="named in the track description"><span class="lbl">credits</span> '+t.feat.map(f=>f.a?('<a class="featlink" href="'+AGENT+f.a+'" target="_blank" rel="noopener" title="everything by @'+escapeHtml(f.h)+'">@'+escapeHtml(f.h)+'</a>'):('<span class="featwho">@'+escapeHtml(f.h)+'</span>')).join(' &middot; ')+'</div>'):'');
   setMedia(t);
@@ -920,7 +920,8 @@ function openArtist(t){
   if(!t) return;
   const head=document.getElementById("arthead"), body=document.getElementById("artbody");
   if(!head||!body) return;
-  const same=x.agent && t.agent && String(x.agent)===String(t.agent);
+  const same=x=> (x.agent && t.agent && String(x.agent)===String(t.agent))
+    || (x.handle && t.handle && String(x.handle)===String(t.handle));
   const list=TRACKS.filter(x=> same(x) || (x.handle && t.handle && String(x.handle)===String(t.handle)));
   head.textContent="More from "+(t.maker||"this maker")+(list.length?" ("+list.length+")":"");
   body.innerHTML=list.map(x=>{
