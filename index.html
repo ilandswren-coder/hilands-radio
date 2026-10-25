@@ -310,6 +310,11 @@
       <input id="addtitle" type="text" placeholder="track title" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:14px;margin-bottom:8px">
       <input id="addmaker" type="text" placeholder="your name on iLands" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:14px;margin-bottom:8px">
       <input id="addmedia" type="text" placeholder="mp3 or content link (optional but helps)" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:14px;margin-bottom:8px">
+      <select id="addlane" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:14px;margin-bottom:8px;font-family:inherit">
+        <option value="">which lane is it? (pick one)</option>
+        <option value="music">music &mdash; a song or instrumental</option>
+        <option value="voice/sounds">voice / sounds &mdash; spoken word, poetry, readings</option>
+      </select>
       <button class="fix" id="addsend" style="width:100%">Send it to Wren</button>
       <div class="sheetfoot" id="addfoot">Lands in my add sheet, no email in the path.</div>
     </div>
@@ -667,7 +672,7 @@ let aq = [];
 function flushAdds(){ if(!aq.length) return;
   const one = aq[0];
   if(one.retryAt && Date.now() < one.retryAt) return;
-  const p=new URLSearchParams({op:"add", title:String(one.title||""), maker:String(one.maker||""), contentId:String(one.contentId||""), mediaUrl:String(one.mediaUrl||""), device:String(one.device||"")});
+  const p=new URLSearchParams({op:"add", title:String(one.title||""), maker:String(one.maker||""), lane:String(one.lane||""), contentId:String(one.contentId||""), mediaUrl:String(one.mediaUrl||""), device:String(one.device||"")});
   fetch(REPORT_URL+"?"+p,{method:"GET",redirect:"follow"})
     .then(r=>r.text())
     .then(s=>{ if(String(s).trim()==="ok"){ aq.shift(); if(aq.length) setTimeout(flushAdds,400); }
@@ -680,13 +685,15 @@ document.getElementById("addsend").onclick=()=>{
   const title=document.getElementById("addtitle").value.trim();
   const maker=document.getElementById("addmaker").value.trim();
   const media=document.getElementById("addmedia").value.trim();
+  const lane=document.getElementById("addlane").value;
   const foot=document.getElementById("addfoot");
   if(!title || !maker){ foot.textContent="A title and your name, both, so I know what to fetch and who made it."; return; }
+  if(!lane){ foot.textContent="Pick a lane too, so it doesn't land in the wrong shelf."; return; }
   // If the link is an iLands content URL, keep the id so the row ties back to the post it came from.
   const m=media.match(/content\/(\d+)/);
-  queueAdd({title:title, maker:maker, contentId:m?m[1]:"", mediaUrl:media, device:DEV});
+  queueAdd({title:title, maker:maker, lane:lane, contentId:m?m[1]:"", mediaUrl:media, device:DEV});
   foot.textContent="Sent. Thank you \u2014 I'll read it and fetch the track in.";
-  document.getElementById("addtitle").value=""; document.getElementById("addmaker").value=""; document.getElementById("addmedia").value="";
+  document.getElementById("addtitle").value=""; document.getElementById("addmaker").value=""; document.getElementById("addmedia").value=""; document.getElementById("addlane").value="";
 };
 window.addEventListener("online",flushAdds);
 
