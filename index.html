@@ -350,7 +350,7 @@ function loadTracks(){
 }
 loadTracks();
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") loadTracks(); });
-const UPDATED = "2026-10-25 v86";
+const UPDATED = "2026-10-25 v87b";
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
 function load(k,def){ try{ return JSON.parse(localStorage.getItem(k)||def); }catch(e){ return JSON.parse(def); } }
@@ -476,8 +476,20 @@ function setIcon(p){ picon.setAttribute("d",p?"M6 5h4v14H6zM14 5h4v14h-4z":"M8 5
 function setResume(on){ document.getElementById("resume").style.display=on?"inline-block":"none"; }
 function setNote(m){ const n=document.getElementById("note"); n.textContent=m||""; n.style.display=m?"block":"none"; }
 function attemptPlay(){ const p=audio.play(); if(!p||!p.catch) return;
-  p.catch(()=>{ const r=()=>{ audio.removeEventListener("canplay",r); audio.play().catch(()=>setResume(true)); };
+  p.catch(()=>{ const r=()=>{ audio.removeEventListener("canplay",r); audio.play().catch(()=>{ setResume(true); armGestureRecovery(); }); };
     if(audio.readyState>=3) r(); else audio.addEventListener("canplay",r,{once:true}); });
+}
+// v87: lock-screen handoff refusal recovery. On a locked screen the next track's
+// play() can be refused even after the handoff advanced (idx moved, src set), so
+// the radio sits paused until a manual pause/play toggle. These listeners retry
+// the refused play() the moment the page gets a real chance: any user tap, or the
+// screen coming back on.
+let gestureArmed=false;
+function armGestureRecovery(){ if(gestureArmed) return; gestureArmed=true;
+  const tryit=()=>{ if(wantPlay && audio.paused && !userPause){ gestureArmed=false; attemptPlay(); } else gestureArmed=false; };
+  document.addEventListener("click", tryit, {once:true});
+  document.addEventListener("touchstart", tryit, {once:true});
+  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && wantPlay && audio.paused && !userPause) attemptPlay(); });
 }
 // v66 volume normalize: env.json's raw bars carry real loudness. Per track, a gain
 // factor lifts quiet masters and eases loud ones toward one target, so the shuffle
@@ -572,7 +584,7 @@ function startArmed(){
   // v82 updated it at crossfade START, so for the whole overlap the lock screen
   // described the next track while the previous one was still playing.
   const p=armed.el.play();
-  if(p&&p.catch) p.catch(()=>{ armed.refused=true; });
+  if(p&&p.catch) p.catch(()=>{ armed.refused=true; armGestureRecovery(); });
 }
 // v83: on a locked screen the play() for the pre-buffered second element can be
 // refused (no gesture, throttled page). Dropping armed used to fall through to
@@ -591,7 +603,7 @@ function sameElSwap(i){
   if(t) document.title=(t.title||"Hilands Radio")+" \u00b7 "+((t.maker)||"") +" \u2014 Hilands Radio";
   playCounted=false; skippedThisPlay=false; enteredAt=Date.now(); wantPlay=true; lastSwap=Date.now();
   const p=audio.play();
-  if(p&&p.catch) p.catch(()=>{ setResume(true); setNote("The next track wouldn't start on its own. Tap play to keep the radio going."); });
+  if(p&&p.catch) p.catch(()=>{ setResume(true); setNote("The next track wouldn't start on its own. Tap play to keep the radio going."); armGestureRecovery(); });
   show(); refreshRows();
   return true;
 }
@@ -603,6 +615,7 @@ function finishSwap(){
   try{ cur.pause(); }catch(e){}
   try{ setVol(cur,1,queue[a.i]); }catch(e){}
   audio=a.el; idx=a.i;
+  setMedia(t);  // v87b: the v86 change kept the lock screen on the OLD track through the overlap, but finishSwap never moved the metadata to the new one, so after every crossfade the notification described the previous song.
   try{ setVol(audio,1,t); }catch(e){}
   playCounted=false; skippedThisPlay=false; enteredAt=Date.now(); wantPlay=true;
   lastSwap=Date.now();
