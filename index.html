@@ -406,6 +406,7 @@ function logSkip(){ const t=queue[idx]; if(!t) return;
   skippedThisPlay=true; }
 function keyed(){ return plPool().map(t=>[Math.pow(Math.random(),1/weight(t)),t]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]); }
 let queue=keyed(), idx=0, wantPlay=false, errStreak=0, lastTick=Date.now();
+let userPause=false; // v76: true only when the listener (or their lockscreen button) meant to stop
 function fmt(s){ if(!isFinite(s)||!s) return "0:00"; const m=Math.floor(s/60), r=Math.floor(s%60); return m+":"+(r<10?"0":"")+r; }
 function show(){
   const t=queue[idx]; if(!t) return;
@@ -498,7 +499,7 @@ function playCurrent(){
     delete recentLeft[t.id]; grace=true;
   }
   playCounted=grace; skippedThisPlay=false; enteredAt=Date.now();
-  wantPlay=true; setResume(false); setNote("");
+  wantPlay=true; userPause=false; setResume(false); setNote("");
   if(typeof armed!=="undefined" && armed){ try{ armed.el.pause(); }catch(e){} armed=null; }
   try{ setVol(audio,1,t); }catch(e){}
   audio.src=t.audio; try{ audio.load(); }catch(e){}
@@ -534,7 +535,7 @@ elPlay.onclick=()=>{
     if(audio.currentSrc && audio.currentTime>0 && !audio.ended){
       wantPlay=true; setResume(false); setNote(""); attemptPlay();
     } else { playCurrent(); }
-  } else { wantPlay=false; audio.pause(); if(envRaf){ cancelAnimationFrame(envRaf); envRaf=0; } if(armed) try{ armed.el.pause(); }catch(e){} }
+  } else { wantPlay=false; userPause=true; audio.pause(); if(envRaf){ cancelAnimationFrame(envRaf); envRaf=0; } if(armed) try{ armed.el.pause(); }catch(e){} }
 };
 document.getElementById("next").onclick=()=>{ logSkip(); next(true); };
 document.getElementById("prev").onclick=()=>next(false);
@@ -581,11 +582,18 @@ function wire(el){
   const dropArmed=()=>{ if(armed && armed.el===el && !armed.started) armed=null; };
   el.addEventListener("play",()=>{ if(!mine()) return; const t=queue[idx]; if(t) document.title=(t.title||"Hilands Radio")+" \u00b7 "+((t.maker)||"")+" \u2014 Hilands Radio"; });
   el.onplay=()=>{ if(!mine()) return; errStreak=0; lastTick=Date.now(); setIcon(true); setResume(false); ms("playbackState","playing"); setPos(); tryLiveWire(el); if(!envRaf&&wantPlay&&!el.paused) envRaf=requestAnimationFrame(drawViz); };
-  el.onpause=()=>{ if(!mine()) return; setIcon(false); ms("playbackState","paused"); };
+  el.onpause=()=>{ if(!mine()) return; setIcon(false); ms("playbackState","paused");
+    // v76: a pause nobody asked for (buffer underrun, OS audio focus, backgrounded
+    // play() drop) is retried, twice, so the radio self-heals instead of sitting silent.
+    if(wantPlay && !userPause && !el.ended){
+      setTimeout(()=>{ if(wantPlay && el.paused && !userPause) attemptPlay(); }, 700);
+      setTimeout(()=>{ if(wantPlay && el.paused && !userPause) attemptPlay(); }, 2500);
+    }
+  };
   el.onended=()=>{ if(!mine()) return;
     if(!playCounted){ playCounted=true; logPlay(queue[idx]); }
     if(!finishSwap()) next(true); };
-  el.onstalled=()=>{ if(!mine()){ dropArmed(); return; } audio.load(); attemptPlay(); };
+  el.onstalled=()=>{ if(!mine()){ dropArmed(); return; } attemptPlay(); }; // v76: no load() here, it resets the track
   el.onerror=()=>{ if(!mine()){ dropArmed(); return; } errStreak++; if(errStreak>6){ wantPlay=false; setIcon(false); setNote("Couldn't reach the next track. Tap play to try again."); return; } setTimeout(()=>next(true),600); };
   el.ontimeupdate=()=>{ if(!mine()) return; lastTick=Date.now();
     if(el.duration){ elBar.style.width=(100*audio.currentTime/audio.duration)+"%"; elCur.textContent=fmt(audio.currentTime); }
@@ -606,7 +614,12 @@ function wire(el){
 }
 let posTick=0;
 wire(audio); wire(A2);
-setInterval(()=>{ if(wantPlay&&!audio.paused&&Date.now()-lastTick>15000){ lastTick=Date.now(); try{ audio.load(); }catch(e){} attemptPlay(); } },5000);
+setInterval(()=>{ if(wantPlay && !audio.paused && Date.now()-lastTick>15000){ lastTick=Date.now(); attemptPlay(); } // v76: no load(), it restarts the track
+  if(wantPlay && audio.paused && !userPause && Date.now()-lastTick>12000){ // v76: stuck-pause heal, position kept
+    lastTick=Date.now();
+    if(audio.currentSrc && audio.currentTime>0 && !audio.ended) attemptPlay(); else playCurrent();
+  }
+},5000);
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&wantPlay&&audio.paused) attemptPlay(); });
 elStars.querySelectorAll(".star").forEach(s=>{ s.onclick=()=>{ const t=queue[idx]; if(!t) return; const v=+s.dataset.v;
   stars[t.id]=(stars[t.id]===v)?0:v; localStorage.setItem(LS,JSON.stringify(stars));

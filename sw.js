@@ -1,6 +1,6 @@
 /* Hilands Radio: network first, so a rebuild lands on the next load.
    Falls back to the stored copy when the phone has no signal. */
-const CACHE = "hilands-radio-v48";
+const CACHE = "hilands-radio-v49";
 const SHELL = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {
