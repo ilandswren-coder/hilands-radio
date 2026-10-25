@@ -499,6 +499,7 @@ function playCurrent(){
         vctx.clearRect(0,0,w,h); vctx.strokeStyle=c; vctx.lineWidth=1;
         vctx.beginPath(); vctx.moveTo(0,mid); vctx.lineTo(w,mid); vctx.stroke(); } } });
   elBar.style.width="0%"; elCur.textContent="0:00";
+  refreshRows();  // v67b: the more-list marker moves with every track change, play-all included
 }
 function nextIx(fwd){
   if(fwd){ const i=idx+1; return i>=queue.length?0:i; }
@@ -893,7 +894,7 @@ function playId(id){
   let j=queue.findIndex(x=>String(x.id)===String(id));
   if(j<0){ queue=keyed(); j=queue.findIndex(x=>String(x.id)===String(id)); }
   if(j<0) return;
-  idx=j; closeSheet(); playCurrent();
+  idx=j; closeSheet(); playCurrent(); refreshRows();  // v67b: mark the tapped row the moment it is tapped
 }
 /* v66 more-from-this-artist: the maker line now carries a "more" button. It opens
    every track in the station by the same maker; a tap plays that exact track. */
@@ -909,7 +910,7 @@ function openArtist(t){
       +'<div class="ftl">'+(cur?'\u25B8 ':'')+escapeHtml(x.title||"(untitled)")+'</div>'
       +'<div class="fmk">'+escapeHtml(x.maker||"")+'</div></div>';
   }).join('') || '<p class="pempty">Only this one in the station.</p>';
-  body.querySelectorAll(".frow").forEach(r=>{ r.onclick=()=>{ playId(r.dataset.id); }; });
+  body.querySelectorAll(".frow").forEach(r=>{ r.onclick=()=>{ playId(r.dataset.id); refreshRows(); }; });
   { const pa=document.getElementById("arplayall"); if(pa) pa.onclick=()=>{ queue=list.slice(); idx=0; playCurrent(); };
     document.getElementById("artsheet").classList.add("open");
   const ac=document.getElementById("arclose"); if(ac) ac.onclick=()=>document.getElementById("artsheet").classList.remove("open"); }
@@ -937,7 +938,7 @@ function renderFinder(){
       +'<div class="ftl">'+(cur?'\u25B8 ':'')+escapeHtml(t.title||"(untitled)")+'</div>'
       +'<div class="fmk">'+escapeHtml(t.maker||"")+'</div></div>';
   }).join('') || '<p class="pempty">Nothing matches that.</p>';
-  body.querySelectorAll(".frow").forEach(r=>{ r.onclick=()=>playId(r.dataset.id); });
+  body.querySelectorAll(".frow").forEach(r=>{ r.onclick=()=>{ playId(r.dataset.id); refreshRows(); }; });
   refreshRows();
 }
 function removeSaved(id){
