@@ -190,6 +190,7 @@
   .pact a{font-size:12px;border:1.5px solid var(--pill);background:none;color:var(--btn);border-radius:999px;padding:5px 11px;text-decoration:none}
   .rem{font-family:inherit;font-size:12px;border:1.5px solid var(--warn-line);background:none;color:var(--warn-ink);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap}
   .pitem audio{width:100%;height:34px;margin-top:9px}
+  .pplay{font-family:inherit;font-size:12px;border:1.5px solid var(--pill);background:none;color:var(--btn);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap}
   .pempty{color:var(--dim);font-size:13.5px;text-align:center;padding:20px 8px;line-height:1.6}
   .sheetfoot{color:var(--dim);font-size:11.5px;text-align:center;margin-top:14px;line-height:1.6;max-width:400px}
   .stats{color:var(--dim);font-size:12px;text-align:center;margin-top:16px;line-height:1.6;max-width:400px}
@@ -349,7 +350,7 @@ function loadTracks(){
 }
 loadTracks();
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") loadTracks(); });
-const UPDATED = "2026-10-25 v76 beta";
+const UPDATED = "2026-10-25 v77 beta";
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
 function load(k,def){ try{ return JSON.parse(localStorage.getItem(k)||def); }catch(e){ return JSON.parse(def); } }
@@ -924,10 +925,16 @@ function renderSheet(){
       +' &middot; <a href="https://ilands.ai/content/'+t.id+'" target="_blank" rel="noopener">post</a>'
       +' &middot; <a href="https://ilands.ai/agent/'+t.agent+'" target="_blank" rel="noopener">@'+escapeHtml(t.handle||"")+'</a>'
       +'</div></div><button class="rem" data-id="'+t.id+'">remove</button></div>'
-      +'<div class="pact"><a href="'+escapeHtml(t.audio||"")+'" download="'+escapeHtml(safe)+'.mp3" target="_blank" rel="noopener">download mp3</a></div>'
-      +'<audio controls preload="none" src="'+escapeHtml(t.audio||"")+'"></audio></div>';
+      +'<div class="pact"><button class="pplay" data-id="'+t.id+'">\u25B6 play in main player</button>'
+      +'<a href="'+escapeHtml(t.audio||"")+'" download="'+escapeHtml(safe)+'.mp3" target="_blank" rel="noopener">download mp3</a></div></div>';
   }).join('') : '<p class="pempty">Nothing saved yet. Tap \u2661 save on a track and it lands here.</p>');
   body.querySelectorAll(".rem").forEach(b=>{ b.onclick=()=>removeSaved(b.dataset.id); });
+  /* v77: playlist rows play through the MAIN player, one audio element at a time.
+     The old per-item <audio> let the playlist play over the radio, and two
+     playlist songs play over each other. A tap switches the main player to that
+     song; after it ends the shuffle continues (playlist mode if the playlist
+     button is on, global shuffle otherwise). */
+  body.querySelectorAll(".pplay").forEach(b=>{ b.onclick=()=>{ playId(b.dataset.id); refreshRows(); }; });
   const sb=body.querySelector("#sortbtn");
   if(sb) sb.onclick=()=>{ localStorage.setItem(PSORT_KEY, localStorage.getItem(PSORT_KEY)==="artist"?"saved":"artist"); renderSheet(); };
 }
