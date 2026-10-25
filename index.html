@@ -906,12 +906,15 @@ function playId(id){
   idx=j; closeSheet(); playCurrent(); refreshRows();  // v67b: mark the tapped row the moment it is tapped
 }
 /* v66 more-from-this-artist: the maker line now carries a "more" button. It opens
-   every track in the station by the same maker; a tap plays that exact track. */
+   tracks from the same artist handle only (maker display names repeat across
+   different artists, so the display name is not the match key); a tap plays
+   that exact track. */
 function openArtist(t){
   if(!t) return;
   const head=document.getElementById("arthead"), body=document.getElementById("artbody");
   if(!head||!body) return;
-  const list=TRACKS.filter(x=>x.agent===t.agent || (x.handle&&x.handle===(t.handle||"")) || x.maker===t.maker);
+  const same=x.agent && t.agent && String(x.agent)===String(t.agent);
+  const list=TRACKS.filter(x=> same(x) || (x.handle && t.handle && String(x.handle)===String(t.handle)));
   head.textContent="More from "+(t.maker||"this maker")+(list.length?" ("+list.length+")":"");
   body.innerHTML=list.map(x=>{
     const cur=queue[idx]&&String(queue[idx].id)===String(x.id);
