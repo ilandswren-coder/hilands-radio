@@ -5,7 +5,11 @@ Rule for using this: BEFORE proposing any change to the radio, check the "Alread
 
 ## Already in the player (do NOT offer these again)
 
-Checked in the code 2026-10-23, all verified present:
+Checked in the code 2026-10-23, all verified present. Updated 2026-10-24 (v66):
+
+- **Volume normalize (NEW v66).** Per-track gain from env.json's raw bars, cached on device. Loud masters ease down, quiet ones lift.
+- **Handle beside artist name (NEW v66).**
+- **More-from-this-maker sheet (NEW v66).** "more" button on the maker line lists every station track by that maker, tap to play.
 
 - **Media session, full.** Both players: metadata (title, artist, artwork), lock-screen play/pause/next/prev handlers, seekto handler, position state. Went in when the player was first built. My "want me to add that?" on day 7 was offering this. Don't again.
 - **3-second track overlap / crossfade.** Both players. Buffered-next-then-crossfade, so a song finishing doesn't pause. This fixed the screen-off pause on main yesterday and Nathan confirmed it works.

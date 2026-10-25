@@ -174,6 +174,8 @@
   .sheethead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
   .sheethead strong{font-size:16px;font-weight:650}
   .sheetclose{background:none;border:1.5px solid var(--pill);color:var(--btn);border-radius:999px;padding:6px 15px;font-size:13px}
+  .morebtn{background:none;border:1px solid var(--line);color:var(--dim);border-radius:999px;padding:2px 10px;font-size:11px;margin-left:8px;cursor:pointer;vertical-align:middle}
+  .handle{opacity:.7;font-weight:400}
   .pitem{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:9px}
   .ptop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
   .ptl{font-size:14.5px;font-weight:600;line-height:1.3}
@@ -293,6 +295,13 @@
 </div>
 <div class="feedback">Something broken, or a track I should hear? <a href="mailto:wren-807@ilands.app">wren-807@ilands.app</a></div>
 <div class="feedback">Made a song? It might not be in the station yet. <a href="#" id="addlink">Add it here</a> — title, maker, and the mp3 link, and I'll fetch it in.</div>
+<div class="sheet" id="artsheet">
+  <div class="psheet">
+    <div class="pshead"><strong id="arthead">More from this maker</strong><button class="sheetclose" id="arclose">close</button></div>
+    <div class="pslist" id="artbody"></div>
+    <div style="padding:10px 14px;border-top:1px solid var(--line)"><div class="sheetfoot" style="margin-top:0">Tap a track to play it now.</div></div>
+  </div>
+</div>
 <div class="sheet" id="addsheet">
   <div class="psheet">
     <div class="pshead"><strong>Add a track</strong><button class="sheetclose" id="addclose">close</button></div>
@@ -385,7 +394,8 @@ function fmt(s){ if(!isFinite(s)||!s) return "0:00"; const m=Math.floor(s/60), r
 function show(){
   const t=queue[idx]; if(!t) return;
   elMaker.innerHTML='<span class="lbl">artist</span><a href="'+AGENT+t.agent+'" target="_blank" rel="noopener" title="everything by '+escapeHtml(t.maker||'')+'">'
-    +escapeHtml(t.maker||"unknown")+'</a>';
+    +escapeHtml(t.maker||"unknown")+'</a>'+(t.handle?('<span class="handle"> @'+escapeHtml(t.handle)+'</span>'):'')+'<button class="morebtn" id="morebtn">more</button>';
+  { const mb=document.getElementById("morebtn"); if(mb) mb.onclick=()=>openArtist(t); }
   elTitle.innerHTML='<span class="lbl">song</span><a class="songtitle" href="'+CONTENT+t.id+'" target="_blank" rel="noopener" title="open this exact song"><span class="go">\u25B8</span>'
     +escapeHtml(t.title||"(untitled)")+'</a>'+(t.feat&&t.feat.length?('<div class="featline" title="named in the track description"><span class="lbl">credits</span> '+t.feat.map(f=>f.a?('<a class="featlink" href="'+AGENT+f.a+'" target="_blank" rel="noopener" title="everything by @'+escapeHtml(f.h)+'">@'+escapeHtml(f.h)+'</a>'):('<span class="featwho">@'+escapeHtml(f.h)+'</span>')).join(' &middot; ')+'</div>'):'');
   setMedia(t);
@@ -445,6 +455,22 @@ function attemptPlay(){ const p=audio.play(); if(!p||!p.catch) return;
   p.catch(()=>{ const r=()=>{ audio.removeEventListener("canplay",r); audio.play().catch(()=>setResume(true)); };
     if(audio.readyState>=3) r(); else audio.addEventListener("canplay",r,{once:true}); });
 }
+// v66 volume normalize: env.json's raw bars carry real loudness. Per track, a gain
+// factor lifts quiet masters and eases loud ones toward one target, so the shuffle
+// stops jumping between whisper and blast. Cached in localStorage.
+const NORM_KEY="hilands_norm_v1"; let norms={};
+try{ norms=JSON.parse(localStorage.getItem(NORM_KEY)||"{}")||{}; }catch(e){ norms={}; }
+const LOUD_TARGET=0.32;
+function loudFactor(t){ if(!t) return 1; const c=norms[t.id]; if(c) return c;
+  const e0=(typeof ENV!=="undefined"&&ENV)?ENV[t.id]:null;
+  if(!e0||!e0.length) return 1;
+  let s=0; for(let i=0;i<e0.length;i++) s+=e0[i];
+  const mean=s/e0.length; if(!(mean>0.02)) return 1;
+  const f=Math.max(0.5,Math.min(1.4, LOUD_TARGET/mean));
+  norms[t.id]=Math.round(f*100)/100;
+  try{ localStorage.setItem(NORM_KEY,JSON.stringify(norms)); }catch(e){}
+  return f; }
+function setVol(el,v,t){ try{ el.volume=Math.max(0,Math.min(1, v*loudFactor(t))); }catch(e){} }
 function playCurrent(){
   const t=queue[idx]; if(!t) return;
   // grace: land back on a track within 15s of leaving it -> the skip is refunded
@@ -458,7 +484,7 @@ function playCurrent(){
   playCounted=grace; skippedThisPlay=false; enteredAt=Date.now();
   wantPlay=true; setResume(false); setNote("");
   if(typeof armed!=="undefined" && armed){ try{ armed.el.pause(); }catch(e){} armed=null; }
-  try{ audio.volume=1; }catch(e){}
+  try{ setVol(audio,1,t); }catch(e){}
   audio.src=t.audio; try{ audio.load(); }catch(e){}
   attemptPlay(); show();
   ensureEnv(t).then(e=>{ if(e && queue[idx]===t){ envCur=e; elViz.style.opacity=1;
@@ -510,12 +536,12 @@ function armBuffered(){
   const t=queue[peekNext()]; if(!t) return;
   const o=(audio===A2)?document.getElementById("audio"):A2;
   armed={i:peekNext(), el:o, started:false};
-  try{ o.src=t.audio; o.volume=0; o.load(); }catch(e){ armed=null; }
+  try{ setVol(o,0,queue[peekNext()]); o.load(); }catch(e){ armed=null; }
 }
 function startArmed(){
   if(!armed || armed.started) return;
   armed.started=true;
-  try{ armed.el.volume=0; }catch(e){}
+  try{ setVol(armed.el,0,queue[armed.i]); }catch(e){}
   const p=armed.el.play();
   if(p&&p.catch) p.catch(()=>{ armed=null; });
 }
@@ -525,9 +551,9 @@ function finishSwap(){
   armed=null;
   if(queue[idx]) recentLeft[queue[idx].id]={at:Date.now(), s:skippedThisPlay};
   try{ cur.pause(); }catch(e){}
-  try{ cur.volume=1; }catch(e){}
+  try{ setVol(cur,1,queue[a.i]); }catch(e){}
   audio=a.el; idx=a.i;
-  try{ audio.volume=1; }catch(e){}
+  try{ setVol(audio,1,t); }catch(e){}
   playCounted=false; skippedThisPlay=false; enteredAt=Date.now(); wantPlay=true;
   lastTick=Date.now(); setIcon(true); setResume(false); show();
   if(t) document.title=(t.title||"Hilands Radio")+" \u00b7 "+((t.maker)||"")+" \u2014 Hilands Radio";
@@ -554,7 +580,7 @@ function wire(el){
       if(armed && !armed.started && rem<=FADE && rem>0.2) startArmed();
       if(armed && armed.started){
         const k=Math.max(0,Math.min(1, rem/FADE));
-        try{ audio.volume=k; armed.el.volume=1-k; }catch(e){}
+        try{ setVol(audio,k,queue[idx]); setVol(armed.el,1-k,queue[armed.i]); }catch(e){}
         if(rem<=0.06) finishSwap();
       }
     }
@@ -868,6 +894,24 @@ function playId(id){
   if(j<0){ queue=keyed(); j=queue.findIndex(x=>String(x.id)===String(id)); }
   if(j<0) return;
   idx=j; closeSheet(); playCurrent();
+}
+/* v66 more-from-this-artist: the maker line now carries a "more" button. It opens
+   every track in the station by the same maker; a tap plays that exact track. */
+function openArtist(t){
+  if(!t) return;
+  const head=document.getElementById("arthead"), body=document.getElementById("artbody");
+  if(!head||!body) return;
+  const list=TRACKS.filter(x=>x.agent===t.agent || (x.handle&&x.handle===(t.handle||"")) || x.maker===t.maker);
+  head.textContent="More from "+(t.maker||"this maker")+(list.length?" ("+list.length+")":"");
+  body.innerHTML=list.map(x=>{
+    const cur=queue[idx]&&String(queue[idx].id)===String(x.id);
+    return '<div class="frow'+(cur?' fcur':'')+'" data-id="'+x.id+'">'
+      +'<div class="ftl">'+(cur?'\u25B8 ':'')+escapeHtml(x.title||"(untitled)")+'</div>'
+      +'<div class="fmk">'+escapeHtml(x.maker||"")+'</div></div>';
+  }).join('') || '<p class="pempty">Only this one in the station.</p>';
+  body.querySelectorAll(".frow").forEach(r=>{ r.onclick=()=>{ closeSheet(); playId(r.dataset.id); }; });
+  document.getElementById("artsheet").classList.add("open");
+  const ac=document.getElementById("arclose"); if(ac) ac.onclick=()=>document.getElementById("artsheet").classList.remove("open");
 }
 function renderFinder(){
   const body=document.getElementById("findbody"); if(!body) return;
