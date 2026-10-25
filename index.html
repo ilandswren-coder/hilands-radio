@@ -350,7 +350,7 @@ function loadTracks(){
 }
 loadTracks();
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") loadTracks(); });
-const UPDATED = "2026-10-25 v85 beta";
+const UPDATED = "2026-10-25 v86";
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
 function load(k,def){ try{ return JSON.parse(localStorage.getItem(k)||def); }catch(e){ return JSON.parse(def); } }
@@ -568,12 +568,9 @@ function startArmed(){
   if(!armed || armed.started) return;
   armed.started=true;
   try{ setVol(armed.el,0,queue[armed.i]); }catch(e){}
-  // v82: the moment the next track is audible, its metadata goes to the lock
-  // screen. The old path only called show() at finishSwap(), which runs at the
-  // very end of the crossfade (and late on a throttled, screen-off page), so
-  // the notification described the PREVIOUS track while the next one played.
-  setMedia(queue[armed.i]);
-  if(queue[armed.i]) document.title=(queue[armed.i].title||"Hilands Radio")+" \u00b7 "+((queue[armed.i].maker)||"")+" \u2014 Hilands Radio";
+  // v86: metadata stays on the OLD track until the crossfade actually finishes.
+  // v82 updated it at crossfade START, so for the whole overlap the lock screen
+  // described the next track while the previous one was still playing.
   const p=armed.el.play();
   if(p&&p.catch) p.catch(()=>{ armed.refused=true; });
 }
@@ -632,15 +629,10 @@ function wire(el){
     // element instead of falling back to a refused play().
     if(armed && (!armed.started || armed.refused)){ sameElSwap(armed.i); }
     else if(!finishSwap()) next(true);
-    // v78: the handoff to the next track can be refused while the page is
-    // backgrounded or the screen is off (no gesture, timers frozen). Retry the
-    // handoff a few times; only give up to a visible note, never to silence.
-    const retryHandoff=()=>{ if(!wantPlay||userPause||!audio.paused) return;
-      if(audio.ended||!audio.currentSrc) sameElSwap(nextIx(true));
-      else if(Date.now()-lastSwap>10000) attemptPlay();
-      else { try{ audio.load(); }catch(e){} setTimeout(()=>{ if(wantPlay&&!userPause&&audio.paused) attemptPlay(); },300); } }; // v79: fresh load first, like the pre-v76 path that worked
-    [1500,4000,8000].forEach(t=>setTimeout(()=>{ retryHandoff();
-      if(wantPlay&&!userPause&&audio.paused&&(audio.ended||!audio.currentSrc)){ setNote("The next track wouldn't start on its own. Tap play to keep the radio going."); setResume(true); } },t)); };
+    // v86: the v78 retry timers fired after EVERY track change, healthy handoff
+    // included, and could stomp a working crossfade into a pause. Removed. The
+    // pre-end arm + crossfade is the path that survived lock screens since v21.
+    // If play() was refused, sameElSwap above already handled it.
   el.onstalled=()=>{ if(!mine()){ dropArmed(); return; } attemptPlay(); }; // v76: no load() here, it resets the track
   el.onerror=()=>{ if(!mine()){ dropArmed(); return; } errStreak++; if(errStreak>6){ wantPlay=false; setIcon(false); setNote("Couldn't reach the next track. Tap play to try again."); return; } setTimeout(()=>next(true),600); };
   el.ontimeupdate=()=>{ if(!mine()) return; lastTick=Date.now();
@@ -651,14 +643,10 @@ function wire(el){
       const rem=audio.duration-audio.currentTime;
       if(!armed && rem<=8 && rem>0.6) armBuffered();
       if(armed && !armed.started && rem<=FADE && rem>0.2) startArmed();
-      // v85: never let the track END on a locked screen. Browsers refuse new
-      // sound after 'ended' fires, so the pre-end swap moves the next file into
-      // the still-playing element just before the boundary. The browser reads
-      // it as one continuous playback; the refusal never gets triggered.
-      if(rem<=0.45){
-        if(armed && armed.started && armed.refused){ sameElSwap(armed.i); return; }
-        if(!armed || !armed.started){ sameElSwap(nextIx(true)); return; }
-      }
+      // v86: the v85 boundary swap removed. On a throttled, screen-off page the
+      // last timeupdate lands well before the boundary, so the swap fired too
+      // late and its play() was refused, ending in the exact pause it was meant
+      // to prevent. The plain arm + crossfade + finishSwap path stays.
       if(armed && armed.started){
         const k=Math.max(0,Math.min(1, rem/FADE));
         try{ setVol(audio,k,queue[idx]); setVol(armed.el,1-k,queue[armed.i]); }catch(e){}
