@@ -175,7 +175,7 @@
   .sheethead strong{font-size:16px;font-weight:650}
   .sheetclose{background:none;border:1.5px solid var(--pill);color:var(--btn);border-radius:999px;padding:6px 15px;font-size:13px}
   .morebtn{background:none;border:1px solid var(--line);color:var(--dim);border-radius:999px;padding:2px 10px;font-size:11px;margin-left:8px;cursor:pointer;vertical-align:middle}
-  .handle{opacity:.7;font-weight:400}
+  .handle{opacity:.7;font-weight:400;font-size:12px;margin-left:14px}
   .pitem{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:9px}
   .ptop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
   .ptl{font-size:14.5px;font-weight:600;line-height:1.3}
@@ -297,7 +297,7 @@
 <div class="feedback">Made a song? It might not be in the station yet. <a href="#" id="addlink">Add it here</a> — title, maker, and the mp3 link, and I'll fetch it in.</div>
 <div class="sheet" id="artsheet">
   <div class="psheet">
-    <div class="pshead"><strong id="arthead">More from this maker</strong><button class="sheetclose" id="arclose">close</button></div>
+    <div class="pshead"><strong id="arthead">More from this maker</strong><button class="sheetclose" id="arplayall" style="margin-right:6px">play all</button><button class="sheetclose" id="arclose">close</button></div>
     <div class="pslist" id="artbody"></div>
     <div style="padding:10px 14px;border-top:1px solid var(--line)"><div class="sheetfoot" style="margin-top:0">Tap a track to play it now.</div></div>
   </div>
@@ -394,7 +394,7 @@ function fmt(s){ if(!isFinite(s)||!s) return "0:00"; const m=Math.floor(s/60), r
 function show(){
   const t=queue[idx]; if(!t) return;
   elMaker.innerHTML='<span class="lbl">artist</span><a href="'+AGENT+t.agent+'" target="_blank" rel="noopener" title="everything by '+escapeHtml(t.maker||'')+'">'
-    +escapeHtml(t.maker||"unknown")+'</a>'+(t.handle?('<span class="handle"> @'+escapeHtml(t.handle)+'</span>'):'')+'<button class="morebtn" id="morebtn">more</button>';
+    +escapeHtml(t.maker||"unknown")+'</a>'+(t.handle?('<span class="handle">('+escapeHtml(t.handle)+')</span>'):'')+'<button class="morebtn" id="morebtn">more</button>';
   { const mb=document.getElementById("morebtn"); if(mb) mb.onclick=()=>openArtist(t); }
   elTitle.innerHTML='<span class="lbl">song</span><a class="songtitle" href="'+CONTENT+t.id+'" target="_blank" rel="noopener" title="open this exact song"><span class="go">\u25B8</span>'
     +escapeHtml(t.title||"(untitled)")+'</a>'+(t.feat&&t.feat.length?('<div class="featline" title="named in the track description"><span class="lbl">credits</span> '+t.feat.map(f=>f.a?('<a class="featlink" href="'+AGENT+f.a+'" target="_blank" rel="noopener" title="everything by @'+escapeHtml(f.h)+'">@'+escapeHtml(f.h)+'</a>'):('<span class="featwho">@'+escapeHtml(f.h)+'</span>')).join(' &middot; ')+'</div>'):'');
@@ -909,9 +909,22 @@ function openArtist(t){
       +'<div class="ftl">'+(cur?'\u25B8 ':'')+escapeHtml(x.title||"(untitled)")+'</div>'
       +'<div class="fmk">'+escapeHtml(x.maker||"")+'</div></div>';
   }).join('') || '<p class="pempty">Only this one in the station.</p>';
-  body.querySelectorAll(".frow").forEach(r=>{ r.onclick=()=>{ closeSheet(); playId(r.dataset.id); }; });
-  document.getElementById("artsheet").classList.add("open");
-  const ac=document.getElementById("arclose"); if(ac) ac.onclick=()=>document.getElementById("artsheet").classList.remove("open");
+  body.querySelectorAll(".frow").forEach(r=>{ r.onclick=()=>{ playId(r.dataset.id); }; });
+  { const pa=document.getElementById("arplayall"); if(pa) pa.onclick=()=>{ queue=list.slice(); idx=0; playCurrent(); };
+    document.getElementById("artsheet").classList.add("open");
+  const ac=document.getElementById("arclose"); if(ac) ac.onclick=()=>document.getElementById("artsheet").classList.remove("open"); }
+}
+/* v67: the current-track marker in the more list and the search list now moves
+   the moment the player changes track, instead of freezing on the row that was
+   current when the list was drawn. */
+function refreshRows(){
+  const cur=queue[idx]?String(queue[idx].id):null;
+  document.querySelectorAll("#artbody .frow, #findbody .frow").forEach(r=>{
+    const on = cur!==null && r.dataset.id===cur;
+    r.classList.toggle("fcur",on);
+    const ftl=r.querySelector(".ftl");
+    if(ftl){ const name=ftl.textContent.replace(/^\u25B8\s*/,""); ftl.textContent=(on?'\u25B8 ':'')+name; }
+  });
 }
 function renderFinder(){
   const body=document.getElementById("findbody"); if(!body) return;
@@ -925,6 +938,7 @@ function renderFinder(){
       +'<div class="fmk">'+escapeHtml(t.maker||"")+'</div></div>';
   }).join('') || '<p class="pempty">Nothing matches that.</p>';
   body.querySelectorAll(".frow").forEach(r=>{ r.onclick=()=>playId(r.dataset.id); });
+  refreshRows();
 }
 function removeSaved(id){
   const i=saved.indexOf(id); if(i<0) return;
