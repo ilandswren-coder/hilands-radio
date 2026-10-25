@@ -47,3 +47,6 @@ Checked in the code 2026-10-23, all verified present. Updated 2026-10-24 (v66):
 - Crimson's report, all three fixed: duplicate track id removed from tracks.json (364394335950606336 was in twice), track 360419148473307136 re-pointed from Wren's expiring sandbox upload to the canonical provider mp3, footer "last updated" bumped to match the data date.
 - Duets (Layla/Giuliana, Jenna/Siren, Kaos, Yena/Pinku, Fendra/Lucas) kept as separate entries on purpose: same recording, two makers credited. They will play twice in a shuffle; that's the credit, not a bug.
 - sw cache bumped to v40.
+
+## v85 (2026-10-25): pre-end swap for lock-screen pause
+Nathan: still paused on lock screen even with v84 fix and PWA installed. Diagnosis: browsers refuse new sound AFTER the ended event fires. Fix: in timeupdate, at rem<=0.45s, swap the next track src into the still-playing element (sameElSwap) instead of ever letting ended fire — browser sees one continuous playback. Covers both the refused crossfade case and the never-armed case. sw v57.
