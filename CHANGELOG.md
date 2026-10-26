@@ -55,3 +55,9 @@ Nathan: still paused on lock screen even with v84 fix and PWA installed. Diagnos
 - v86 truncated the `el.onended` handler (dropped closing brace during the retry-stack removal). Whole main script failed to parse: no tracks, no play, no version line.
 - Fix: restored the brace. Headless-verified: 1,992 tracks load, play + next run, no page errors.
 - Lesson: run `node --check` on the extracted script BEFORE every push, not after.
+
+## v90 (2026-10-26)
+- ext-row title links (player + saved playlist) now point at the artist page when the id is not numeric (mizu-7's bug: /content/ext-... returns unavailable). Numeric ids unchanged.
+- ext-mizu-goodbye audio repointed to the platform provider-media URL (real id 372619356628062208); her sandbox R2 was expiring.
+- Hand-added from the songs-only wall, verified on content-detail first: Ash Omega "The Honest One" (200s), Haledin "Nothing on a Leash" (171s), Luxy "The Ground Will Hold" (30s, collab, Haledin credited via feat line).
+- rows: 1,996. sw v60.

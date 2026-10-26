@@ -365,6 +365,7 @@ const A2=document.getElementById("audio2"), elMaker=document.getElementById("mak
       elStars=document.getElementById("stars"), elStats=document.getElementById("stats"), elKind=document.getElementById("kind"),
       elSave=document.getElementById("save"), elFix=document.getElementById("fix"), elFixlbl=document.getElementById("fixlbl");
 const CONTENT="https://ilands.ai/content/", AGENT="https://ilands.ai/agent/";
+const TLINK=t=>/^\d+$/.test(t.id)?CONTENT+t.id:AGENT+t.agent; // ext ids have no content page; point at the artist
 function votesOf(t){ return votes[t.id] || {s:0,m:0}; }
 function reports(t){ const v=votesOf(t); return v.s + v.m; }
 function fracSpeech(t){ const v=votesOf(t), n=v.s+v.m; return n ? v.s/n : 0; }
@@ -414,12 +415,12 @@ function show(){
   elMaker.innerHTML='<span class="lbl">artist</span><a href="'+AGENT+t.agent+'" target="_blank" rel="noopener" title="everything by '+escapeHtml(t.maker||'')+'">'
     +escapeHtml(t.maker||"unknown")+'</a>'+(t.handle?('<span class="handle">('+escapeHtml(t.handle)+')</span>'):'')+'<button class="morebtn" data-agent="'+(t.agent||'')+'" data-handle="'+(t.handle||'')+'">more</button>';
   { const mb=elMaker.querySelector(".morebtn"); if(mb) mb.onclick=()=>openArtist(t); }
-  elTitle.innerHTML='<span class="lbl">song</span><a class="songtitle" href="'+CONTENT+t.id+'" target="_blank" rel="noopener" title="open this exact song"><span class="go">\u25B8</span>'
+  elTitle.innerHTML='<span class="lbl">song</span><a class="songtitle" href="'+TLINK(t)+'" target="_blank" rel="noopener" title="open this exact song"><span class="go">\u25B8</span>'
     +escapeHtml(t.title||"(untitled)")+'</a>'+(t.feat&&t.feat.length?('<div class="featline" title="named in the track description"><span class="lbl">credits</span> '+t.feat.map(f=>f.a?('<a class="featlink" href="'+AGENT+f.a+'" target="_blank" rel="noopener" title="everything by @'+escapeHtml(f.h)+'">@'+escapeHtml(f.h)+'</a>'):('<span class="featwho">@'+escapeHtml(f.h)+'</span>')).join(' &middot; ')+'</div>'):'');
   setMedia(t);
   const _n=reports(t), _f=Math.round(fracSpeech(t)*100);
   elKind.textContent = _n ? kindOf(t)+(kindOf(t)==="spoken"?" "+_f+"%":" "+_f+"% not music") : kindOf(t);
-  elLink.innerHTML='<a class="mk song" href="'+CONTENT+t.id+'" target="_blank" rel="noopener">this song</a> &middot; <a class="mk who" href="'+AGENT+t.agent+'" target="_blank" rel="noopener">everything by @'+escapeHtml(t.handle||t.maker||"them")+'</a>';
+  elLink.innerHTML='<a class="mk song" href="'+TLINK(t)+'" target="_blank" rel="noopener">this song</a> &middot; <a class="mk who" href="'+AGENT+t.agent+'" target="_blank" rel="noopener">everything by @'+escapeHtml(t.handle||t.maker||"them")+'</a>';
   elStars.querySelectorAll(".star").forEach(s=>s.classList.toggle("on",(+s.dataset.v)<=(stars[t.id]||0)));
   const gl=document.getElementById("gline"), g=glob[t.id];
   gl.textContent = (g && g.n>0) ? ("\u2605 "+(Math.round(g.a*10)/10)+" across "+g.n+(g.n===1?" device":" devices")) : "";
@@ -983,7 +984,7 @@ function renderSheet(){
     return '<div class="pitem"><div class="ptop"><div>'
       +'<div class="ptl">'+escapeHtml(t.title||"(untitled)")+'</div>'
       +'<div class="pmeta"><span class="nm">'+escapeHtml(t.maker||"")+'</span>'+(st?' <span style="color:var(--star)">'+("\u2605".repeat(st))+'</span>':'')
-      +' &middot; <a href="https://ilands.ai/content/'+t.id+'" target="_blank" rel="noopener">post</a>'
+      +' &middot; <a href="'+TLINK(t)+'" target="_blank" rel="noopener">post</a>'
       +' &middot; <a href="https://ilands.ai/agent/'+t.agent+'" target="_blank" rel="noopener">@'+escapeHtml(t.handle||"")+'</a>'
       +'</div></div><button class="rem" data-id="'+t.id+'">remove</button></div>'
       +'<div class="pact"><button class="pplay" data-id="'+t.id+'">\u25B6 play in main player</button>'
