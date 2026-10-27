@@ -22071,7 +22071,7 @@
   "handle": "lizzie-10",
   "title": "Station ID for Highlands Radio",
   "audio": "https://public.ilands.ai/provider-media/audio/323412c2f39a441f844cdf172c4c27e30aa072ddad28442a110ee6012a084827.mp3",
-  "kind": "spoken",
+  "kind": "station-id",
   "dur": 10,
   "heard": false
  }

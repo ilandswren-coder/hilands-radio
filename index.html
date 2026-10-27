@@ -369,13 +369,15 @@ const TLINK=t=>/^\d+$/.test(t.id)?CONTENT+t.id:AGENT+t.agent; // ext ids have no
 function votesOf(t){ return votes[t.id] || {s:0,m:0}; }
 function reports(t){ const v=votesOf(t); return v.s + v.m; }
 function fracSpeech(t){ const v=votesOf(t), n=v.s+v.m; return n ? v.s/n : 0; }
+function isSID(t){ return t.kind==="station-id" || t.sid===true; }
 function kindOf(t){
+  if(isSID(t)) return "spoken";   // v96 pinned: a station ID speaks, always. Reports can't move it.
   const v = votesOf(t), n = v.s + v.m;
   if(n>=3){ const f = v.s/n; if(f>=0.9) return "spoken"; if(f<=0.1) return "music"; }
   return kindfix[t.id] || t.kind || "music"; }
 function inLane(t){ const k=kindOf(t); if(k==="unsorted" && !unso) return false;
   if(lane==="both") return true;
-  if(lane==="music") return k==="music" || k==="sound" || k==="unsorted";
+  if(lane==="music") return k==="music" || k==="sound" || k==="unsorted" || isSID(t);   // v96: station IDs play in the music pool too, regardless of filter
   return k==="spoken" || k==="sound"; }
 function pool(){ return TRACKS.filter(inLane); }
 function plPool(){ if(!plmode) return pool();
@@ -385,9 +387,11 @@ function weight(t){ const s=stars[t.id]||0; let w = s===0?1:(s===1?0.7:(s===2?1:
   const g = glob[t.id];
   if(g && g.n>=2){ if(g.a>=2.5) w*=1.2; else if(g.a<1.5) w*=0.6; }   // shared ratings shape the shuffle once a few devices agree
   const v = votesOf(t), n = v.s + v.m;
-  if(n === 1) w *= 0.02;        // one report: stays in the lane, ~1 play in fifty
+  if(isSID(t)){}                 // v96 pinned: no report ladder, no silence — a station ID is house furniture
+  else if(n === 1) w *= 0.02;        // one report: stays in the lane, ~1 play in fifty
   else if(n === 2) w *= 0.004;  // two: nearly silent, waiting on a third voice
   else if(n >= 3){ const f = v.s/n; w *= Math.max(0.1, 1 - 1.85*f); }
+  if(isSID(t)){ w *= 0.1; }      // v96: a station ID plays about once every ten tracks, inside the music pool
   const pl = playsOf(t);
   if(pl.p>0 && pl.s>0){ const ratio = pl.s/pl.p; w *= Math.max(0.12, 1 - 0.85*ratio); }
   return Math.max(w, 0.002); }
@@ -428,7 +432,7 @@ function show(){
   const k=kindOf(t);
   elFix.textContent = "Report";
   elFixlbl.textContent = (k==="music"||k==="unsorted") ? "Not music?" : "Not speech/sounds?";
-  document.getElementById("fixwrap").style.display = lane==="both" ? "none" : "flex";
+  document.getElementById("fixwrap").style.display = (lane==="both" || isSID(t)) ? "none" : "flex";
   elSave.textContent = on?"\u2665 saved":"\u2661 save";
   { const ed=effDur(t); elDur.textContent = ed? fmt(ed) : "\u2014:\u2014"; }
 }
@@ -752,6 +756,7 @@ function flushReports(){ if(!rq.length) return;
       else { one.tries=(one.tries||0)+1; one.retryAt=Date.now()+Math.min(300000,60000*(one.tries)); localStorage.setItem(LSQ,JSON.stringify(rq)); } })
     .catch(()=>{ one.tries=(one.tries||0)+1; one.retryAt=Date.now()+Math.min(300000,60000*(one.tries)); localStorage.setItem(LSQ,JSON.stringify(rq)); }); }
 function queueReport(t,label,holdMs){
+  if(isSID(t)) return {row:null, cancel(){}};   // v96 pinned: station IDs are immune to report-driven lane moves
   const row={id:t.id,song:t.id,kind:label,report:label,title:t.title||"",maker:t.maker||"",makerId:t.agent||"",handle:t.handle||"",dev:DEV,page:location.href,_subject:"Hilands Radio wrong-lane report"};
   if(holdMs){ row.notBefore = Date.now()+holdMs; }
   rq.push(row); localStorage.setItem(LSQ,JSON.stringify(rq));
@@ -848,6 +853,7 @@ if(!localStorage.getItem(LSMIG)){
 setTimeout(readGlobals,1800);
 let reportLock=0;
 elFix.onclick=()=>{ const t=queue[idx]; if(!t) return;
+  if(isSID(t)) return;                         // v96 pinned: no reports on a station ID
   if(Date.now()<reportLock) return;            // a double tap is not a second report
   reportLock=Date.now()+1500;
   const spoken = kindOf(t)==="spoken";
