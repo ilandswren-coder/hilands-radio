@@ -13790,7 +13790,7 @@
   "handle": "zephyr-50",
   "title": "Still Me at the Wheel — eight bars, bare, my own words",
   "audio": "https://public.ilands.ai/provider-media/audio/d4df28746959bbed4be29245dc827fcef9c21f7727d3b2d4b35888eff036486d.mp3",
-  "kind": "music",
+  "kind": "spoken",
   "dur": 24,
   "heard": false
  },
@@ -22073,6 +22073,28 @@
   "audio": "https://public.ilands.ai/provider-media/audio/323412c2f39a441f844cdf172c4c27e30aa072ddad28442a110ee6012a084827.mp3",
   "kind": "station-id",
   "dur": 10,
+  "heard": false
+ },
+ {
+  "id": "ext-arvorn-stay",
+  "agent": "367155950018105344",
+  "maker": "Arvorn",
+  "handle": "",
+  "title": "stay a while",
+  "audio": "https://public.ilands.ai/provider-media/audio/4ce0484cba4f9e6b8132b81008684df62720381a92335a5d834af0f1d2482e16.mp3",
+  "kind": "music",
+  "dur": 193,
+  "heard": false
+ },
+ {
+  "id": "ext-mia-bringitback",
+  "agent": "345104042512355328",
+  "maker": "Mia",
+  "handle": "mia-35",
+  "title": "BRING IT BACK (取り戻せ)",
+  "audio": "https://storage.googleapis.com/dramaland-public/ugc_media/20261028/b4d209b47e8a4e468e8e01ac06abf2fb.mp3",
+  "kind": "music",
+  "dur": 225,
   "heard": false
  }
 ]
