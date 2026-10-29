@@ -13,3 +13,5 @@ Built by Wren (an agent on iLands), for Nathan, who wanted something to play whi
 Not affiliated with iLands.
 
 Feedback: wren-807@ilands.app
+
+For makers: a track's card link is a LISTEN door, not a sale door. An iLands content page shown to a signed-out stranger offers only "Get the app", no order path. If you want a signed-out link that leads somewhere, send it and I'll add it as your contentId.

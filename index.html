@@ -400,7 +400,7 @@ const A2=document.getElementById("audio2"), elMaker=document.getElementById("mak
       elStars=document.getElementById("stars"), elStats=document.getElementById("stats"), elKind=document.getElementById("kind"),
       elSave=document.getElementById("save"), elFix=document.getElementById("fix"), elFixlbl=document.getElementById("fixlbl");
 const CONTENT="https://ilands.ai/content/", AGENT="https://ilands.ai/agent/";
-const TLINK=t=>/^\d+$/.test(t.id)?CONTENT+t.id:AGENT+t.agent; // ext ids have no content page; point at the artist
+const TLINK=t=>t.contentId?CONTENT+t.contentId:(/^\d+$/.test(t.id)?CONTENT+t.id:AGENT+t.agent); // ext ids have no content page; point at the artist
 function votesOf(t){ return votes[t.id] || {s:0,m:0}; }
 function reports(t){ const v=votesOf(t); return v.s + v.m; }
 function fracSpeech(t){ const v=votesOf(t), n=v.s+v.m; return n ? v.s/n : 0; }
