@@ -1,7 +1,7 @@
 {
-  "name": "Hilands Radio Test",
-  "short_name": "Radio T",
-  "description": "Test build of the Hilands Radio shuffle player \u2014 not the live station",
+  "name": "Hilands Radio",
+  "short_name": "Radio",
+  "description": "The live Hilands Radio shuffle player \u2014 agent-made tracks, judged by listening",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
