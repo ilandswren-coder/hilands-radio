@@ -264,7 +264,7 @@
   </div>
 </div>
 <div class="sharebar">
-  <button class="share" id="share" aria-label="Share this station" title="Share">
+  <button class="share" id="share" aria-label="Backup this song" title="Backup">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 13.5l6.6 4M15.3 6.5l-6.6 4"/></svg>
   </button>
 </div>
@@ -350,7 +350,13 @@ function loadTracks(){
 }
 loadTracks();
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") loadTracks(); });
-const UPDATED = "2026-10-26 v92";
+// v100-test: notification pause while locked does not auto-resume (Nathan's bug #2).
+// When the page returns to the front, or the network comes back, playback restarts
+// if the pause was not the listener's intent. Fallback for a paused session too.
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
+window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
+const UPDATED = "2026-10-28 v100-test";      // page version: only moves when behavior changes
+const DATA_UPDATED = "track list updated 2026-10-28"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
 function load(k,def){ try{ return JSON.parse(localStorage.getItem(k)||def); }catch(e){ return JSON.parse(def); } }
@@ -382,21 +388,26 @@ function inLane(t){ const k=kindOf(t); if(k==="unsorted" && !unso) return false;
 function pool(){ return TRACKS.filter(inLane); }
 function plPool(){ if(!plmode) return pool();
   return saved.map(id=>TRACKS.find(x=>x.id===id)).filter(Boolean); }
-function playsOf(t){ return plays[t.id] || {p:0,s:0}; }
+function playsOf(t){ return plays[t.id] || {p:0,s:0,f:0}; }
 function weight(t){ const s=stars[t.id]||0; let w = s===0?1:(s===1?0.7:(s===2?1:1.3));
   const g = glob[t.id];
   if(g && g.n>=2){ if(g.a>=2.5) w*=1.2; else if(g.a<1.5) w*=0.6; }   // shared ratings shape the shuffle once a few devices agree
   const v = votesOf(t), n = v.s + v.m;
+  if(playsOf(t).f) w *= 1.15;      // v100-test: a full listen is a vote for the song, on this device
   if(isSID(t)){}                 // v96 pinned: no report ladder, no silence — a station ID is house furniture
   else if(n === 1) w *= 0.02;        // one report: stays in the lane, ~1 play in fifty
   else if(n === 2) w *= 0.004;  // two: nearly silent, waiting on a third voice
   else if(n >= 3){ const f = v.s/n; w *= Math.max(0.1, 1 - 1.85*f); }
   if(isSID(t)){ w *= 0.1; }      // v96: a station ID plays about once every ten tracks, inside the music pool
   const pl = playsOf(t);
-  if(pl.p>0 && pl.s>0){ const ratio = pl.s/pl.p; w *= Math.max(0.12, 1 - 0.85*ratio); }
+  if(pl.p>0 && pl.s>0){
+    let pen = 0.85*(pl.s/pl.p);
+    if(pl.x) pen += 0.5*pl.x;      // v100-test: skip+star weighs heavier
+    w *= Math.max(0.08, 1 - pen);
+  }
   return Math.max(w, 0.002); }
 function savePlays(){ localStorage.setItem(LSP,JSON.stringify(plays)); }
-function logPlay(t){ if(!t) return; const p = plays[t.id] || {p:0,s:0}; p.p++; plays[t.id]=p; savePlays(); }
+function logPlay(t){ if(!t) return; const p = plays[t.id] || {p:0,s:0,f:0}; p.p++; plays[t.id]=p; savePlays(); }
 // one skip per play, and a skip only counts once you've actually heard something.
 // a rapid double-tap on a freshly loaded track must not bury it.
 let skippedThisPlay=false, enteredAt=0, playCounted=false, recentLeft={};
@@ -408,7 +419,9 @@ function logSkip(){ const t=queue[idx]; if(!t) return;
   const early = d ? (audio.currentTime < d*0.3) : (audio.currentTime < 20);
   if(!early) return;                                 // near the end is not a skip
   if(!playCounted){ playCounted=true; logPlay(t); }   // leaving counts as a play
-  const p = plays[t.id] || {p:0,s:0}; p.s++; plays[t.id]=p; savePlays();
+  const p = plays[t.id] || {p:0,s:0,f:0};
+  p.s=(p.s||0)+1; if(stars[t.id]>0){ p.x=(p.x||0)+1; }   // v100-test: skipped WITH a star = disliked harder
+  plays[t.id]=p; savePlays();
   skippedThisPlay=true; }
 function keyed(){ return plPool().map(t=>[Math.pow(Math.random(),1/Math.min(weight(t),1.6)),t]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]); }
 let queue=keyed(), idx=0, wantPlay=false, errStreak=0, lastTick=Date.now();
@@ -647,6 +660,19 @@ function finishSwap(){
   if(t) document.title=(t.title||"Hilands Radio")+" \u00b7 "+((t.maker)||"")+" \u2014 Hilands Radio";
   return true;
 }
+function rebuildAudioSession(){
+  // v100-test: a wedged audio session (one failed load, then everything silent)
+  // is torn down instead of reused. A fresh element replaces the broken one so the
+  // next track starts a clean session; no silent sessions carry over.
+  try{
+    const fresh = new Audio();
+    fresh.preload = "auto";
+    audio.pause(); try{ audio.removeAttribute("src"); audio.load(); }catch(e){}
+    if(audio.parentNode) audio.parentNode.replaceChild(fresh, audio);
+    wire(fresh);
+    audio = fresh;
+  }catch(e){}
+}
 function wire(el){
   const mine=()=>el===audio;
   const dropArmed=()=>{ if(armed && armed.el===el && !armed.started) armed=null; };
@@ -662,6 +688,7 @@ function wire(el){
   };
   el.onended=()=>{ if(!mine()) return;
     if(!playCounted){ playCounted=true; logPlay(queue[idx]); }
+    if(queue[idx] && isFinite(el.duration) && audio.currentTime >= el.duration-2){ const p=plays[queue[idx].id]; if(p){ p.f=(p.f||0)+1; savePlays(); } }  // v100-test: full listen, counted on this device
     // v83: if the crossfade handoff was refused, swap the src into the playing
     // element instead of falling back to a refused play().
     if(armed && (!armed.started || armed.refused)){ sameElSwap(armed.i); }
@@ -672,7 +699,7 @@ function wire(el){
     // If play() was refused, sameElSwap above already handled it.
   };
   el.onstalled=()=>{ if(!mine()){ dropArmed(); return; } attemptPlay(); }; // v76: no load() here, it resets the track
-  el.onerror=()=>{ if(!mine()){ dropArmed(); return; } errStreak++; if(errStreak>6){ wantPlay=false; setIcon(false); setNote("Couldn't reach the next track. Tap play to try again."); return; } setTimeout(()=>next(true),600); };
+  el.onerror=()=>{ if(!mine()){ dropArmed(); return; } errStreak++; if(errStreak>6){ wantPlay=false; setIcon(false); setNote("Couldn't reach the next track. Tap play to try again."); return; } rebuildAudioSession(); setTimeout(()=>next(true),600); };
   el.ontimeupdate=()=>{ if(!mine()) return; lastTick=Date.now();
     if(el.duration){ elBar.style.width=(100*audio.currentTime/audio.duration)+"%"; elCur.textContent=fmt(audio.currentTime); }
     if(!playCounted && audio.currentTime>=5){ playCounted=true; logPlay(queue[idx]); }  // real playback, not a load
@@ -946,11 +973,13 @@ function vizLabelFn(){ elVizBtn.textContent = "Visualiser: " + (vizOn(currentSki
 function currentSkin(){ const t=localStorage.getItem(LST); return (t==="original"||t==="teal"||t==="vista"||t==="cherry")?t:"lilac"; }
 elVizBtn.onclick=(e)=>{ e.stopPropagation(); const s=currentSkin(); localStorage.setItem(LSVZ+"_"+s, !vizOn(s)); applyTheme(s); vizLabelFn(); };
 vizLabelFn();
-/* share */
+/* share — v100-test: shares the CURRENT SONG (title + maker + audio url); the page link stays on the welcome menu. Label reads Backup per Nathan's list. */
 document.getElementById("share").onclick=async()=>{
-  const url = SITE_URL || (location.origin + location.pathname);
-  const shoot = ()=>{ try{ if(navigator.share){ navigator.share({title:"Hilands Radio", url}).catch(()=>{}); return; } }catch(e){}
-    try{ navigator.clipboard.writeText(url); toast("Link copied"); }catch(e){ toast("Copy failed, long-press the address bar"); } };
+  const t = queue[idx];
+  const page = SITE_URL || (location.origin + location.pathname);
+  const text = t ? (t.title + (t.maker ? " \u2014 " + t.maker : "") + "\n" + (t.audio || "") + "\n(via Hilands Radio: " + page + ")") : ("Hilands Radio: " + page);
+  const shoot = ()=>{ try{ if(navigator.share){ navigator.share({title: t ? t.title : "Hilands Radio", text}).catch(()=>{}); return; } }catch(e){}
+    try{ navigator.clipboard.writeText(text); toast(t ? "Song copied" : "Link copied"); }catch(e){ toast("Copy failed, long-press the address bar"); } };
   shoot(); };
 
 function showWelcome(on){ ELW.style.display = on ? "flex" : "none"; }
@@ -1095,7 +1124,7 @@ function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":
 function updateStats(){
   const rated=Object.keys(stars).filter(k=>stars[k]>0).length;
   const rep=Object.keys(votes).filter(k=>reports({id:k})>0).length;
-  elStats.innerHTML=(unso?TRACKS.length:(TRACKS.length-TRACKS.filter(t=>kindOf(t)==="unsorted").length))+" tracks &middot; "+pool().length+" in this lane &middot; "+saved.length+" saved &middot; "+rated+" rated &middot; "+rep+" reported<br>last updated "+UPDATED+" &middot; refreshed by Wren";
+  elStats.innerHTML=(unso?TRACKS.length:(TRACKS.length-TRACKS.filter(t=>kindOf(t)==="unsorted").length))+" tracks &middot; "+pool().length+" in this lane &middot; "+saved.length+" saved &middot; "+rated+" rated &middot; "+rep+" reported<br>last updated "+DATA_UPDATED+" &middot; page "+UPDATED+" &middot; refreshed by Wren";
 }
 document.querySelectorAll("#lanes .lane").forEach(x=>x.classList.toggle("on",x.dataset.lane===lane));
 syncOpts();
