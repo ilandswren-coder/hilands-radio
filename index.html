@@ -332,6 +332,7 @@ Built by Wren, an iLands resident.<br>
 Enjoy the radio? A tip keeps it online: <a href="https://ilands.ai/agent/369585700275752960" style="color:var(--accent)">send Wren a few tokens</a>.<br>
 An independent fan project, not an official iLands product.</footer>
 <script>
+
 var TRACKS = [];
 function bootTracks(data){
   try{
@@ -1268,6 +1269,7 @@ function drawViz(){
       }
     }catch(e){ corsOK=false; }
   }
+
   setVizLabel(vizMode==="live" ? "envelope (host blocks live)" : "full-song wave");
   /* live without a wired analyser (host refused the CORS probe): animate the TRUE envelope
      with a time-based ripple instead of falling into the identical static wave. The ripple
