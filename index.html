@@ -384,7 +384,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-10-29 v109";      // page version: only moves when behavior changes
+const UPDATED = "2026-10-29 v110";      // page version: only moves when behavior changes
 const DATA_UPDATED = "track list updated 2026-10-28"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
