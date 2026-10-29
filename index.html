@@ -47,6 +47,13 @@
     --btn-ink:#260910; --toast-bg:#2e0b12; --text-soft:#c39aa0; --dim2:#b58b91; --count:#b58b91;
     --warn-line:#8c4a3a; --warn-ink:#f0a084; --hl:#ffb86b;
     --shadow-card:0 12px 40px rgba(0,0,0,.5); --shadow-menu:0 18px 46px rgba(0,0,0,.65); --scrim:rgba(23,4,7,.93); }
+  html[data-theme="moss"]{ --bg:#0e130c; --searchpanel:#121810; --panel:#171f14; --ink:#eef3e6; --dim:#a3b394; --btn:#dfe8d2; --accent:#9cc44e; --line:#3a4a30; --pill:#4d5f3e;
+    --on-accent:#14200a; --glow:#1c2a10; --track:#26351c;
+    --link-who:#c8a44e; --link-who-hi:#e0c46e; --link-song:#8fc98a; --link-song-hi:#b0e0aa; --link-feat:#d18a5a;
+    --star:#c9d94e; --star-glow:rgba(201,217,78,.4); --star-off:#4d5f3e; --star-off-hi:#6f8a4e;
+    --btn-ink:#171f14; --toast-bg:#1e2717; --text-soft:#a3b394; --dim2:#93a487; --count:#93a487;
+    --warn-line:#7a6a3a; --warn-ink:#e0c060; --hl:#3a5c2a;
+    --shadow-card:0 12px 38px rgba(0,0,0,.5); --shadow-menu:0 18px 46px rgba(0,0,0,.6); --scrim:rgba(14,19,12,.94); }
   html[data-theme="vista"] .card{position:relative;overflow:hidden;border:1px solid rgba(120,160,220,.35);
     background:linear-gradient(180deg,#26324b 0%,#111827 42%,#0a0f19 100%)}
   html[data-theme="vista"] .card::before{content:"";position:absolute;left:0;right:0;top:0;height:42%;
@@ -243,6 +250,7 @@
       <option value="teal">Teal</option>
       <option value="vista">Vista (WMP)</option>
       <option value="cherry">Black Cherry</option>
+      <option value="moss">Moss</option>
     </select>
   </div>
 </div>
@@ -979,10 +987,10 @@ const LSW="hilands_radio_seen_v1", ELW=document.getElementById("welcome");
 /* theme */
 const LST="hilands_radio_theme_v1", LSVZ="hilands_radio_viz_v2";  /* v2: resets stale saved viz off-prefs from earlier tests, so vista defaults back to visualiser on */
 const SITE_URL="https://ilandswren-coder.github.io/hilands-radio/";  /* fixed public address, set at commit */
-function applyTheme(t){ const name=(t==="original"||t==="teal"||t==="vista"||t==="cherry")?t:"lilac";
+function applyTheme(t){ const name=(t==="original"||t==="teal"||t==="vista"||t==="cherry"||t==="moss")?t:"lilac";
   document.documentElement.dataset.theme = name;
   const sel=document.getElementById("themeSel"); if(sel) sel.value=name;
-  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = name==="original" ? "#211b12" : name==="teal" ? "#e2f1ef" : name==="vista" ? "#0b0f18" : name==="cherry" ? "#170407" : "#ece3f8";
+  const m=document.querySelector('meta[name="theme-color"]'); if(m) m.content = name==="original" ? "#211b12" : name==="teal" ? "#e2f1ef" : name==="vista" ? "#0b0f18" : name==="cherry" ? "#170407" : name==="moss" ? "#0e130c" : "#ece3f8";
   /* the visualiser is a per-skin toggle: on by default on the Vista (WMP) skin, off elsewhere */
   const vz=document.getElementById("viz"); if(vz) vz.style.display = vizOn(name)?"":"none";
   const vzn=document.getElementById("viznote"); if(vzn) vzn.style.display = vizOn(name)?"":"none"; }
@@ -991,7 +999,7 @@ applyTheme(localStorage.getItem(LST));
 document.getElementById("themeSel").onchange=(e)=>{ const t=e.target.value; localStorage.setItem(LST,t); applyTheme(t); };
 const elVizBtn=document.getElementById("vizbtn");
 function vizLabelFn(){ elVizBtn.textContent = "Visualiser: " + (vizOn(currentSkin())?"on":"off"); }
-function currentSkin(){ const t=localStorage.getItem(LST); return (t==="original"||t==="teal"||t==="vista"||t==="cherry")?t:"lilac"; }
+function currentSkin(){ const t=localStorage.getItem(LST); return (t==="original"||t==="teal"||t==="vista"||t==="cherry"||t==="moss")?t:"lilac"; }
 elVizBtn.onclick=(e)=>{ e.stopPropagation(); const s=currentSkin(); localStorage.setItem(LSVZ+"_"+s, !vizOn(s)); applyTheme(s); vizLabelFn(); };
 vizLabelFn();
 /* share — v101-test: bottom button shares the APP link again (Nathan: app share stays at the bottom). The song share is the small note-arrow button next to the title.
