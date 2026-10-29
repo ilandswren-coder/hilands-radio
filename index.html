@@ -1024,7 +1024,7 @@ function playId(id){
   if(plmode && saved.indexOf(t.id)<0) setPlMode(false);   // playlist mode only plays saved tracks
   let j=queue.findIndex(x=>String(x.id)===String(id));
   if(j<0){ queue=keyed(); j=queue.findIndex(x=>String(x.id)===String(id)); }
-  if(j<0) return;
+  if(j<0){ queue.push(t); j=queue.length-1; }  // v99: tapped track outside the current lane still plays
   idx=j; closeSheet(); playCurrent(); refreshRows();  // v67b: mark the tapped row the moment it is tapped
 }
 /* v66 more-from-this-artist: the maker line now carries a "more" button. It opens
