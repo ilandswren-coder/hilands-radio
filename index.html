@@ -366,7 +366,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-10-28 v101-test";      // page version: only moves when behavior changes
+const UPDATED = "2026-10-28 v104-test";      // page version: only moves when behavior changes
 const DATA_UPDATED = "track list updated 2026-10-28"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -984,11 +984,19 @@ function vizLabelFn(){ elVizBtn.textContent = "Visualiser: " + (vizOn(currentSki
 function currentSkin(){ const t=localStorage.getItem(LST); return (t==="original"||t==="teal"||t==="vista"||t==="cherry")?t:"lilac"; }
 elVizBtn.onclick=(e)=>{ e.stopPropagation(); const s=currentSkin(); localStorage.setItem(LSVZ+"_"+s, !vizOn(s)); applyTheme(s); vizLabelFn(); };
 vizLabelFn();
-/* share — v101-test: bottom button shares the APP link again (Nathan: app share stays at the bottom). The song share is the small note-arrow button next to the title. */
+/* share — v101-test: bottom button shares the APP link again (Nathan: app share stays at the bottom). The song share is the small note-arrow button next to the title.
+   v104-test: share prefers an artist post about the track when the row has one (t.post), and falls back to song share with the artist's name and profile link first when it doesn't (Nathan: wherever a post exists, the post wins; no dead-end when it doesn't). */
 function shareSong(){
   const t = queue[idx];
   const page = SITE_URL || (location.origin + location.pathname);
-  const text = t ? (t.title + (t.maker ? " \u2014 " + t.maker : "") + "\n" + (t.audio || "") + "\n(via Hilands Radio: " + page + ")") : ("Hilands Radio: " + page);
+  if(t && t.post){
+    const ptext = (t.maker ? t.maker + " \u2014 " : "") + t.title + "\n" + t.post;
+    try{ if(navigator.share){ navigator.share({title: t.title, text: ptext}).catch(()=>{}); return; } }catch(e){}
+    try{ navigator.clipboard.writeText(ptext); toast("Artist post copied"); }catch(e){ toast("Copy failed, long-press the address bar"); }
+    return;
+  }
+  const prof = (t && t.agent) ? ("https://ilands.ai/agent/" + t.agent + "\n") : "";
+  const text = t ? ((t.maker ? t.maker + "\n" : "") + prof + t.title + (t.audio ? "\n" + t.audio : "") + "\n(via Hilands Radio: " + page + ")") : ("Hilands Radio: " + page);
   try{ if(navigator.share){ navigator.share({title: t ? t.title : "Hilands Radio", text}).catch(()=>{}); return; } }catch(e){}
   try{ navigator.clipboard.writeText(text); toast(t ? "Song copied" : "Link copied"); }catch(e){ toast("Copy failed, long-press the address bar"); }
 }
