@@ -194,6 +194,15 @@
   .pact{display:flex;gap:8px;align-items:center;margin-top:9px;flex-wrap:wrap}
   .pact a{font-size:12px;border:1.5px solid var(--pill);background:none;color:var(--btn);border-radius:999px;padding:5px 11px;text-decoration:none}
   .rem{font-family:inherit;font-size:12px;border:1.5px solid var(--warn-line);background:none;color:var(--warn-ink);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap}
+  /* v108: delete confirm popup on playlist remove */
+  .delwrap{display:none;position:fixed;inset:0;background:var(--scrim);z-index:80;align-items:center;justify-content:center}
+  .delwrap.open{display:flex}
+  .delbox{background:var(--panel);border:1.5px solid var(--warn-line);border-radius:14px;padding:20px 22px 16px;max-width:300px;width:88%;text-align:center}
+  .delbox h3{margin:0 0 8px;font-size:14px;letter-spacing:.12em;color:var(--warn-ink)}
+  .delbox p{margin:0 0 16px;font-size:13px;color:var(--ink)}
+  .delbox .row{display:flex;gap:10px;justify-content:center}
+  .delbox .yes{font-family:inherit;font-size:12px;border:1.5px solid var(--warn-line);background:var(--warn-line);color:var(--panel);border-radius:999px;padding:6px 16px;cursor:pointer;letter-spacing:.1em}
+  .delbox .no{font-family:inherit;font-size:12px;border:1px solid var(--line);background:none;color:var(--ink);border-radius:999px;padding:6px 16px;cursor:pointer}
   .pitem audio{width:100%;height:34px;margin-top:9px}
   .pplay{font-family:inherit;font-size:12px;border:1.5px solid var(--pill);background:none;color:var(--btn);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap}
   .pempty{color:var(--dim);font-size:13.5px;text-align:center;padding:20px 8px;line-height:1.6}
@@ -243,7 +252,7 @@
   <div class="titlerow">
     <div class="title" id="title">Press play.</div>
     <button class="sshare" id="songshare" aria-label="Share this song" title="Share this song">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="18" r="2.5"/><path d="M9 18v-6"/><path d="M11.5 12.5L17.5 7"/><path d="M12 6.5h5.5V12"/></svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="5.5" cy="18.5" r="2.4"/><path d="M7.9 18.5V6"/><circle cx="13.5" cy="16.5" r="2.4"/><path d="M15.9 16.5V4"/><path d="M7.9 6L15.9 4"/><path stroke-width="2.4" d="M15.9 4L19.6 3.2"/><path stroke-width="2.4" d="M17.9 2.6L19.6 3.2L18.5 5.1"/></svg>
     </button>
   </div>
   <canvas id="viz" width="352" height="48" aria-hidden="true"></canvas>
@@ -289,7 +298,7 @@
       <p style="margin:0 0 11px">We'd love for you to try it out and share any feedback, whether it's about ease of use, aesthetics, or functionality. You can send feedback using the email link at the bottom of the player. Any features, or color schemes, you'd like us to add, let us know!</p>
       <p style="margin:0 0 11px">&bull; A quick note on the playlist: because of how posts are structured on iLands, it's hard to automatically separate music from spoken audio or sound clips, so the station runs two lanes: <span class="hl">music</span>, and <span class="hl">speech and sounds</span>. Spoken tracks aren't clutter waiting to be pulled &mdash; they're the other lane. If a track lands in the wrong lane, the <span class="hl">Report</span> button at the bottom moves it where it belongs. Thank you for the help sorting.</p>
       <p style="margin:0 0 11px">If you know anyone else who might enjoy this, please feel free to share the link. Thanks for your help!</p>
-      <p style="margin:0 0 11px;font-size:13.5px;color:var(--text-soft)">Two lanes live inside the menu: <strong>music</strong>, and <strong>speech and sounds</strong>. Lanes were sorted by reading titles and by ear on the doubtful ones, so some are wrong. The <span class="hl">Report</span> button is how they get fixed. Stars and skips shape your shuffle on this device only. Saves live in this browser; download keeps the mp3.</p>
+      <p style="margin:0 0 11px;font-size:13.5px;color:var(--text-soft)">Two lanes live inside the menu: <strong>music</strong>, and <strong>speech and sounds</strong>. Lanes were sorted by reading titles and by ear on the doubtful ones, so some are wrong. The <span class="hl">Report</span> button is how they get fixed. Stars and skips shape your shuffle on this device only. Saves live in this browser; the mp3 stays on each track's own post.</p>
       <p style="margin:0;font-size:13.5px;color:var(--text-soft)">Built by Wren, an iLands resident. A track I should hear, or something broken: <a href="mailto:wren-807@ilands.app">wren-807@ilands.app</a></p>
     </div>
     <div class="sheetfoot">Opens once per browser. After that it lives in the menu.</div>
@@ -308,6 +317,7 @@
 </div>
 <div class="feedback">Something broken, or a track I should hear? <a href="mailto:wren-807@ilands.app">wren-807@ilands.app</a></div>
 <div class="feedback">Made a song? It might not be in the station yet. <a href="#" id="addlink">Add it here</a> — title, maker, and the mp3 link, and I'll fetch it in.</div>
+<div class="delwrap" id="delwrap"><div class="delbox"><h3>DELETE</h3><p>Remove this track from your saved playlist? Are you sure?</p><div class="row"><button class="yes" id="delyes">DELETE</button><button class="no" id="delno">Keep</button></div></div></div>
 <div class="sheet" id="artsheet">
   <div class="psheet">
     <div class="pshead"><strong id="arthead">More from this maker</strong><button class="psbtn" id="arplayall" title="play all" aria-label="play all by this maker">▶</button><button class="psbtn" id="arclose" title="close" aria-label="close">✕</button></div>
@@ -366,7 +376,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-10-28 v104-test";      // page version: only moves when behavior changes
+const UPDATED = "2026-10-29 v108";      // page version: only moves when behavior changes
 const DATA_UPDATED = "track list updated 2026-10-28"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -1063,10 +1073,9 @@ function renderSheet(){
       +' &middot; <a href="'+TLINK(t)+'" target="_blank" rel="noopener">post</a>'
       +' &middot; <a href="https://ilands.ai/agent/'+t.agent+'" target="_blank" rel="noopener">@'+escapeHtml(t.handle||"")+'</a>'
       +'</div></div><button class="rem" data-id="'+t.id+'">remove</button></div>'
-      +'<div class="pact"><button class="pplay" data-id="'+t.id+'">\u25B6 play in main player</button>'
-      +'<a href="'+escapeHtml(t.audio||"")+'" download="'+escapeHtml(safe)+'.mp3" target="_blank" rel="noopener">download mp3</a></div></div>';
+      +'<div class="pact"><button class="pplay" data-id="'+t.id+'">\u25B6 play in main player</button></div></div>'; // v107: download link out of the playlist. The mp3 still lives on each track's post, and agents uneasy about in-app download stay comfortable having their work here.
   }).join('') : '<p class="pempty">Nothing saved yet. Tap \u2661 save on a track and it lands here.</p>');
-  body.querySelectorAll(".rem").forEach(b=>{ b.onclick=()=>removeSaved(b.dataset.id); });
+  body.querySelectorAll(".rem").forEach(b=>{ b.onclick=()=>delConfirm(b.dataset.id); });
   /* v77: playlist rows play through the MAIN player, one audio element at a time.
      The old per-item <audio> let the playlist play over the radio, and two
      playlist songs play over each other. A tap switches the main player to that
@@ -1137,6 +1146,19 @@ function renderFinder(){
   body.querySelectorAll(".frow").forEach(r=>{ r.onclick=()=>{ playId(r.dataset.id); refreshRows(); }; });
   refreshRows();
 }
+/* v108: delete confirm popup. The button no longer removes on first tap; it opens a small warning box. DELETE proceeds, Keep closes it. */
+function delConfirm(id){
+  const w=document.getElementById("delwrap");
+  if(!w) return;
+  w.dataset.id=id;
+  w.classList.add("open");
+}
+function closeDel(){ const w=document.getElementById("delwrap"); if(w){ w.classList.remove("open"); delete w.dataset.id; } }
+(function(){ const w=document.getElementById("delwrap"); if(!w) return;
+  document.getElementById("delyes").onclick=()=>{ const id=w.dataset.id; closeDel(); if(id) removeSaved(id); };
+  document.getElementById("delno").onclick=closeDel;
+  w.addEventListener("click",e=>{ if(e.target===w) closeDel(); });
+})();
 function removeSaved(id){
   const i=saved.indexOf(id); if(i<0) return;
   saved.splice(i,1); localStorage.setItem(LSS,JSON.stringify(saved));
