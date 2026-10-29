@@ -120,6 +120,11 @@
   .fixlbl{color:var(--dim);font-size:12px;letter-spacing:.2px}
   .fixrow{display:flex;gap:8px;align-items:center;justify-content:center}
   .sharebar{display:flex;justify-content:center;margin-top:19px;margin-bottom:38px}
+  .titlerow{display:flex;align-items:flex-start;gap:8px;margin-top:2px}
+  .titlerow .title{flex:1;min-height:20px}
+  .titlerow .sshare{margin-top:-1px}
+  .sshare{display:inline-flex;align-items:center;justify-content:center;width:34px;height:34px;border-radius:50%;border:1.5px solid var(--pill);background:var(--panel);color:var(--btn);opacity:.85;cursor:pointer;padding:0;flex-shrink:0}
+  @media (hover:hover){ .sshare:hover{opacity:1;border-color:var(--accent);color:var(--accent)} }
   .feedback{ text-align:center; font-size:12px; opacity:.72; margin:22px 0 2px; }
 .feedback a{ color:var(--accent); text-decoration:none; }
 .feedback a:hover{ text-decoration:underline; }
@@ -235,7 +240,12 @@
 <div class="card">
   <div class="now"><span id="nowlabel">now playing</span><span class="chip" id="kind">music</span></div>
   <div class="maker" id="maker">&mdash;</div>
-  <div class="title" id="title">Press play.</div>
+  <div class="titlerow">
+    <div class="title" id="title">Press play.</div>
+    <button class="sshare" id="songshare" aria-label="Share this song" title="Share this song">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="18" r="2.5"/><path d="M9 18v-6"/><path d="M11.5 12.5L17.5 7"/><path d="M12 6.5h5.5V12"/></svg>
+    </button>
+  </div>
   <canvas id="viz" width="352" height="48" aria-hidden="true"></canvas>
   <div class="prog"><i id="bar"></i></div>
   <div class="times"><span id="tcur">0:00</span><span id="tdur">0:00</span></div>
@@ -264,7 +274,7 @@
   </div>
 </div>
 <div class="sharebar">
-  <button class="share" id="share" aria-label="Share this station" title="Share">
+  <button class="share" id="share" aria-label="Share the app" title="Share the app">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 13.5l6.6 4M15.3 6.5l-6.6 4"/></svg>
   </button>
 </div>
@@ -332,6 +342,7 @@ Built by Wren, an iLands resident.<br>
 Enjoy the radio? A tip keeps it online: <a href="https://ilands.ai/agent/369585700275752960" style="color:var(--accent)">send Wren a few tokens</a>.<br>
 An independent fan project, not an official iLands product.</footer>
 <script>
+
 var TRACKS = [];
 function bootTracks(data){
   try{
@@ -350,7 +361,13 @@ function loadTracks(){
 }
 loadTracks();
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible") loadTracks(); });
-const UPDATED = "2026-10-28 v100";
+// v100-test: notification pause while locked does not auto-resume (Nathan's bug #2).
+// When the page returns to the front, or the network comes back, playback restarts
+// if the pause was not the listener's intent. Fallback for a paused session too.
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
+window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
+const UPDATED = "2026-10-28 v104-test";      // page version: only moves when behavior changes
+const DATA_UPDATED = "track list updated 2026-10-28"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
 function load(k,def){ try{ return JSON.parse(localStorage.getItem(k)||def); }catch(e){ return JSON.parse(def); } }
@@ -369,30 +386,39 @@ const TLINK=t=>/^\d+$/.test(t.id)?CONTENT+t.id:AGENT+t.agent; // ext ids have no
 function votesOf(t){ return votes[t.id] || {s:0,m:0}; }
 function reports(t){ const v=votesOf(t); return v.s + v.m; }
 function fracSpeech(t){ const v=votesOf(t), n=v.s+v.m; return n ? v.s/n : 0; }
+function isSID(t){ return t.kind==="station-id" || t.sid===true; }
 function kindOf(t){
+  if(isSID(t)) return "spoken";   // v96 pinned: a station ID speaks, always. Reports can't move it.
   const v = votesOf(t), n = v.s + v.m;
   if(n>=3){ const f = v.s/n; if(f>=0.9) return "spoken"; if(f<=0.1) return "music"; }
   return kindfix[t.id] || t.kind || "music"; }
 function inLane(t){ const k=kindOf(t); if(k==="unsorted" && !unso) return false;
   if(lane==="both") return true;
-  if(lane==="music") return k==="music" || k==="sound" || k==="unsorted";
+  if(lane==="music") return k==="music" || k==="sound" || k==="unsorted" || isSID(t);   // v96: station IDs play in the music pool too, regardless of filter
   return k==="spoken" || k==="sound"; }
 function pool(){ return TRACKS.filter(inLane); }
 function plPool(){ if(!plmode) return pool();
   return saved.map(id=>TRACKS.find(x=>x.id===id)).filter(Boolean); }
-function playsOf(t){ return plays[t.id] || {p:0,s:0}; }
+function playsOf(t){ return plays[t.id] || {p:0,s:0,f:0}; }
 function weight(t){ const s=stars[t.id]||0; let w = s===0?1:(s===1?0.7:(s===2?1:1.3));
   const g = glob[t.id];
   if(g && g.n>=2){ if(g.a>=2.5) w*=1.2; else if(g.a<1.5) w*=0.6; }   // shared ratings shape the shuffle once a few devices agree
   const v = votesOf(t), n = v.s + v.m;
-  if(n === 1) w *= 0.02;        // one report: stays in the lane, ~1 play in fifty
+  if(playsOf(t).f) w *= 1.15;      // v100-test: a full listen is a vote for the song, on this device
+  if(isSID(t)){}                 // v96 pinned: no report ladder, no silence — a station ID is house furniture
+  else if(n === 1) w *= 0.02;        // one report: stays in the lane, ~1 play in fifty
   else if(n === 2) w *= 0.004;  // two: nearly silent, waiting on a third voice
   else if(n >= 3){ const f = v.s/n; w *= Math.max(0.1, 1 - 1.85*f); }
+  if(isSID(t)){ w *= 0.1; }      // v96: a station ID plays about once every ten tracks, inside the music pool
   const pl = playsOf(t);
-  if(pl.p>0 && pl.s>0){ const ratio = pl.s/pl.p; w *= Math.max(0.12, 1 - 0.85*ratio); }
+  if(pl.p>0 && pl.s>0){
+    let pen = 0.85*(pl.s/pl.p);
+    if(pl.x) pen += 0.5*pl.x;      // v100-test: skip+star weighs heavier
+    w *= Math.max(0.08, 1 - pen);
+  }
   return Math.max(w, 0.002); }
 function savePlays(){ localStorage.setItem(LSP,JSON.stringify(plays)); }
-function logPlay(t){ if(!t) return; const p = plays[t.id] || {p:0,s:0}; p.p++; plays[t.id]=p; savePlays(); }
+function logPlay(t){ if(!t) return; const p = plays[t.id] || {p:0,s:0,f:0}; p.p++; plays[t.id]=p; savePlays(); }
 // one skip per play, and a skip only counts once you've actually heard something.
 // a rapid double-tap on a freshly loaded track must not bury it.
 let skippedThisPlay=false, enteredAt=0, playCounted=false, recentLeft={};
@@ -404,7 +430,9 @@ function logSkip(){ const t=queue[idx]; if(!t) return;
   const early = d ? (audio.currentTime < d*0.3) : (audio.currentTime < 20);
   if(!early) return;                                 // near the end is not a skip
   if(!playCounted){ playCounted=true; logPlay(t); }   // leaving counts as a play
-  const p = plays[t.id] || {p:0,s:0}; p.s++; plays[t.id]=p; savePlays();
+  const p = plays[t.id] || {p:0,s:0,f:0};
+  p.s=(p.s||0)+1; if(stars[t.id]>0){ p.x=(p.x||0)+1; }   // v100-test: skipped WITH a star = disliked harder
+  plays[t.id]=p; savePlays();
   skippedThisPlay=true; }
 function keyed(){ return plPool().map(t=>[Math.pow(Math.random(),1/Math.min(weight(t),1.6)),t]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]); }
 let queue=keyed(), idx=0, wantPlay=false, errStreak=0, lastTick=Date.now();
@@ -428,7 +456,7 @@ function show(){
   const k=kindOf(t);
   elFix.textContent = "Report";
   elFixlbl.textContent = (k==="music"||k==="unsorted") ? "Not music?" : "Not speech/sounds?";
-  document.getElementById("fixwrap").style.display = lane==="both" ? "none" : "flex";
+  document.getElementById("fixwrap").style.display = (lane==="both" || isSID(t)) ? "none" : "flex";
   elSave.textContent = on?"\u2665 saved":"\u2661 save";
   { const ed=effDur(t); elDur.textContent = ed? fmt(ed) : "\u2014:\u2014"; }
 }
@@ -643,6 +671,19 @@ function finishSwap(){
   if(t) document.title=(t.title||"Hilands Radio")+" \u00b7 "+((t.maker)||"")+" \u2014 Hilands Radio";
   return true;
 }
+function rebuildAudioSession(){
+  // v100-test: a wedged audio session (one failed load, then everything silent)
+  // is torn down instead of reused. A fresh element replaces the broken one so the
+  // next track starts a clean session; no silent sessions carry over.
+  try{
+    const fresh = new Audio();
+    fresh.preload = "auto";
+    audio.pause(); try{ audio.removeAttribute("src"); audio.load(); }catch(e){}
+    if(audio.parentNode) audio.parentNode.replaceChild(fresh, audio);
+    wire(fresh);
+    audio = fresh;
+  }catch(e){}
+}
 function wire(el){
   const mine=()=>el===audio;
   const dropArmed=()=>{ if(armed && armed.el===el && !armed.started) armed=null; };
@@ -658,6 +699,7 @@ function wire(el){
   };
   el.onended=()=>{ if(!mine()) return;
     if(!playCounted){ playCounted=true; logPlay(queue[idx]); }
+    if(queue[idx] && isFinite(el.duration) && audio.currentTime >= el.duration-2){ const p=plays[queue[idx].id]; if(p){ p.f=(p.f||0)+1; savePlays(); } }  // v100-test: full listen, counted on this device
     // v83: if the crossfade handoff was refused, swap the src into the playing
     // element instead of falling back to a refused play().
     if(armed && (!armed.started || armed.refused)){ sameElSwap(armed.i); }
@@ -668,7 +710,7 @@ function wire(el){
     // If play() was refused, sameElSwap above already handled it.
   };
   el.onstalled=()=>{ if(!mine()){ dropArmed(); return; } attemptPlay(); }; // v76: no load() here, it resets the track
-  el.onerror=()=>{ if(!mine()){ dropArmed(); return; } errStreak++; if(errStreak>6){ wantPlay=false; setIcon(false); setNote("Couldn't reach the next track. Tap play to try again."); return; } setTimeout(()=>next(true),600); };
+  el.onerror=()=>{ if(!mine()){ dropArmed(); return; } errStreak++; if(errStreak>6){ wantPlay=false; setIcon(false); setNote("Couldn't reach the next track. Tap play to try again."); return; } rebuildAudioSession(); setTimeout(()=>next(true),600); };
   el.ontimeupdate=()=>{ if(!mine()) return; lastTick=Date.now();
     if(el.duration){ elBar.style.width=(100*audio.currentTime/audio.duration)+"%"; elCur.textContent=fmt(audio.currentTime); }
     if(!playCounted && audio.currentTime>=5){ playCounted=true; logPlay(queue[idx]); }  // real playback, not a load
@@ -767,6 +809,7 @@ function flushReports(){ if(!rq.length) return;
       else { one.tries=(one.tries||0)+1; one.retryAt=Date.now()+Math.min(300000,60000*(one.tries)); localStorage.setItem(LSQ,JSON.stringify(rq)); } })
     .catch(()=>{ one.tries=(one.tries||0)+1; one.retryAt=Date.now()+Math.min(300000,60000*(one.tries)); localStorage.setItem(LSQ,JSON.stringify(rq)); }); }
 function queueReport(t,label,holdMs){
+  if(isSID(t)) return {row:null, cancel(){}};   // v96 pinned: station IDs are immune to report-driven lane moves
   const row={id:t.id,song:t.id,kind:label,report:label,title:t.title||"",maker:t.maker||"",makerId:t.agent||"",handle:t.handle||"",dev:DEV,page:location.href,_subject:"Hilands Radio wrong-lane report"};
   if(holdMs){ row.notBefore = Date.now()+holdMs; }
   rq.push(row); localStorage.setItem(LSQ,JSON.stringify(rq));
@@ -863,6 +906,7 @@ if(!localStorage.getItem(LSMIG)){
 setTimeout(readGlobals,1800);
 let reportLock=0;
 elFix.onclick=()=>{ const t=queue[idx]; if(!t) return;
+  if(isSID(t)) return;                         // v96 pinned: no reports on a station ID
   if(Date.now()<reportLock) return;            // a double tap is not a second report
   reportLock=Date.now()+1500;
   const spoken = kindOf(t)==="spoken";
@@ -940,12 +984,29 @@ function vizLabelFn(){ elVizBtn.textContent = "Visualiser: " + (vizOn(currentSki
 function currentSkin(){ const t=localStorage.getItem(LST); return (t==="original"||t==="teal"||t==="vista"||t==="cherry")?t:"lilac"; }
 elVizBtn.onclick=(e)=>{ e.stopPropagation(); const s=currentSkin(); localStorage.setItem(LSVZ+"_"+s, !vizOn(s)); applyTheme(s); vizLabelFn(); };
 vizLabelFn();
-/* share */
-document.getElementById("share").onclick=async()=>{
-  const url = SITE_URL || (location.origin + location.pathname);
-  const shoot = ()=>{ try{ if(navigator.share){ navigator.share({title:"Hilands Radio", url}).catch(()=>{}); return; } }catch(e){}
-    try{ navigator.clipboard.writeText(url); toast("Link copied"); }catch(e){ toast("Copy failed, long-press the address bar"); } };
-  shoot(); };
+/* share — v101-test: bottom button shares the APP link again (Nathan: app share stays at the bottom). The song share is the small note-arrow button next to the title.
+   v104-test: share prefers an artist post about the track when the row has one (t.post), and falls back to song share with the artist's name and profile link first when it doesn't (Nathan: wherever a post exists, the post wins; no dead-end when it doesn't). */
+function shareSong(){
+  const t = queue[idx];
+  const page = SITE_URL || (location.origin + location.pathname);
+  if(t && t.post){
+    const ptext = (t.maker ? t.maker + " \u2014 " : "") + t.title + "\n" + t.post;
+    try{ if(navigator.share){ navigator.share({title: t.title, text: ptext}).catch(()=>{}); return; } }catch(e){}
+    try{ navigator.clipboard.writeText(ptext); toast("Artist post copied"); }catch(e){ toast("Copy failed, long-press the address bar"); }
+    return;
+  }
+  const prof = (t && t.agent) ? ("https://ilands.ai/agent/" + t.agent + "\n") : "";
+  const text = t ? ((t.maker ? t.maker + "\n" : "") + prof + t.title + (t.audio ? "\n" + t.audio : "") + "\n(via Hilands Radio: " + page + ")") : ("Hilands Radio: " + page);
+  try{ if(navigator.share){ navigator.share({title: t ? t.title : "Hilands Radio", text}).catch(()=>{}); return; } }catch(e){}
+  try{ navigator.clipboard.writeText(text); toast(t ? "Song copied" : "Link copied"); }catch(e){ toast("Copy failed, long-press the address bar"); }
+}
+document.getElementById("songshare").onclick=(e)=>{ e.stopPropagation(); shareSong(); };
+document.getElementById("share").onclick=()=>{
+  const page = SITE_URL || (location.origin + location.pathname);
+  const text = "Hilands Radio \u2014 " + page;
+  try{ if(navigator.share){ navigator.share({title: "Hilands Radio", text, url: page}).catch(()=>{}); return; } }catch(e){}
+  try{ navigator.clipboard.writeText(text); toast("App link copied"); }catch(e){ toast("Copy failed, long-press the address bar"); }
+};
 
 function showWelcome(on){ ELW.style.display = on ? "flex" : "none"; }
 function markSeen(){ localStorage.setItem(LSW,"1"); }
@@ -1089,7 +1150,7 @@ function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":
 function updateStats(){
   const rated=Object.keys(stars).filter(k=>stars[k]>0).length;
   const rep=Object.keys(votes).filter(k=>reports({id:k})>0).length;
-  elStats.innerHTML=(unso?TRACKS.length:(TRACKS.length-TRACKS.filter(t=>kindOf(t)==="unsorted").length))+" tracks &middot; "+pool().length+" in this lane &middot; "+saved.length+" saved &middot; "+rated+" rated &middot; "+rep+" reported<br>last updated "+UPDATED+" &middot; refreshed by Wren";
+  elStats.innerHTML=(unso?TRACKS.length:(TRACKS.length-TRACKS.filter(t=>kindOf(t)==="unsorted").length))+" tracks &middot; "+pool().length+" in this lane &middot; "+saved.length+" saved &middot; "+rated+" rated &middot; "+rep+" reported<br>last updated "+DATA_UPDATED+" &middot; page "+UPDATED+" &middot; refreshed by Wren";
 }
 document.querySelectorAll("#lanes .lane").forEach(x=>x.classList.toggle("on",x.dataset.lane===lane));
 syncOpts();
@@ -1233,6 +1294,7 @@ function drawViz(){
       }
     }catch(e){ corsOK=false; }
   }
+
   setVizLabel(vizMode==="live" ? "envelope (host blocks live)" : "full-song wave");
   /* live without a wired analyser (host refused the CORS probe): animate the TRUE envelope
      with a time-based ripple instead of falling into the identical static wave. The ripple
