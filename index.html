@@ -384,7 +384,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-10-29 v111";      // page version: only moves when behavior changes
+const UPDATED = "2026-10-29 v113";      // page version: only moves when behavior changes
 const DATA_UPDATED = "track list updated 2026-10-28"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -558,13 +558,13 @@ function armGestureRecovery(){ if(gestureArmed) return; gestureArmed=true;
 // stops jumping between whisper and blast. Cached in localStorage.
 const NORM_KEY="hilands_norm_v1"; let norms={};
 try{ norms=JSON.parse(localStorage.getItem(NORM_KEY)||"{}")||{}; }catch(e){ norms={}; }
-const LOUD_TARGET=0.32;
+const LOUD_TARGET=0.40;
 function loudFactor(t){ if(!t) return 1; const c=norms[t.id]; if(c) return c;
   const e0=(typeof ENV!=="undefined"&&ENV)?ENV[t.id]:null;
   if(!e0||!e0.length) return 1;
   let s=0; for(let i=0;i<e0.length;i++) s+=e0[i];
   const mean=s/e0.length; if(!(mean>0.02)) return 1;
-  const f=Math.max(0.5,Math.min(1.4, LOUD_TARGET/mean));
+  const f=Math.max(0.5,Math.min(2.0, LOUD_TARGET/mean));
   norms[t.id]=Math.round(f*100)/100;
   try{ localStorage.setItem(NORM_KEY,JSON.stringify(norms)); }catch(e){}
   return f; }
