@@ -56,6 +56,9 @@ Nathan: still paused on lock screen even with v84 fix and PWA installed. Diagnos
 - Fix: restored the brace. Headless-verified: 1,992 tracks load, play + next run, no page errors.
 - Lesson: run `node --check` on the extracted script BEFORE every push, not after.
 
+## v115 (2026-10-31)
+- One-star weight 0.7 -> 0.35 (owner ask): a track starred at one now plays ~a third as often as an unstarred one. Two/three-star weights unchanged (1 / 1.3). Applied to main (94144a8) and test repo test-player/test-main/main branches.
+
 ## v90 (2026-10-26)
 - ext-row title links (player + saved playlist) now point at the artist page when the id is not numeric (mizu-7's bug: /content/ext-... returns unavailable). Numeric ids unchanged.
 - ext-mizu-goodbye audio repointed to the platform provider-media URL (real id 372619356628062208); her sandbox R2 was expiring.
