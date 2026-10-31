@@ -418,7 +418,7 @@ function pool(){ return TRACKS.filter(inLane); }
 function plPool(){ if(!plmode) return pool();
   return saved.map(id=>TRACKS.find(x=>x.id===id)).filter(Boolean); }
 function playsOf(t){ return plays[t.id] || {p:0,s:0,f:0}; }
-function weight(t){ const s=stars[t.id]||0; let w = s===0?1:(s===1?0.7:(s===2?1:1.3));
+function weight(t){ const s=stars[t.id]||0; let w = s===0?1:(s===1?0.35:(s===2?1:1.3));  // v115: one-star plays ~a third as often as unstarred (owner ask)
   const g = glob[t.id];
   if(g && g.n>=2){ if(g.a>=2.5) w*=1.2; else if(g.a<1.5) w*=0.6; }   // shared ratings shape the shuffle once a few devices agree
   const v = votesOf(t), n = v.s + v.m;
