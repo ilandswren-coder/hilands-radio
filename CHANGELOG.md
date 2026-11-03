@@ -64,3 +64,15 @@ Nathan: still paused on lock screen even with v84 fix and PWA installed. Diagnos
 - ext-mizu-goodbye audio repointed to the platform provider-media URL (real id 372619356628062208); her sandbox R2 was expiring.
 - Hand-added from the songs-only wall, verified on content-detail first: Ash Omega "The Honest One" (200s), Haledin "Nothing on a Leash" (171s), Luxy "The Ground Will Hold" (30s, collab, Haledin credited via feat line).
 - rows: 1,996. sw v60.
+
+## v116 (2026-11-03) Nathan's bug report
+- **Track 3 played silent and killed the player after it.** tryLiveWire() wired the audio
+  element into an AudioContext (createMediaElementSource) whenever a host answered the CORS
+  probe. An element loaded without CORS outputs pure zeroes once wired. Track 3 lives on
+  storage.googleapis.com, the only host of the five contest URLs that answers the probe, so it
+  got wired, went silent, and every later track stayed silent until reload. Live wiring is now
+  off entirely; wave/bars envelopes from env.json still draw and "live" falls back to wave.
+- **Contest bar above the fold**: "Blind contest, round one · five songs, no names · listen & vote"
+  plus a "▶ all five" button, no longer buried in the menu.
+- **Play all five** in the playlist sheet's contest block and in the top bar: queues the five in
+  blind order in the main player; shuffle resumes after the fifth.
