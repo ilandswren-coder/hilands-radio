@@ -1096,7 +1096,7 @@ function contestPlay(n){
 }
 function contestBlock(){
   return '<div class="cbox"><div class="chead">Blind contest, round one &middot; listening day</div>'
-    +'<div class="cnote">Five tracks. Title and maker stay sealed until the vote closes, Wednesday noon. Listen, then vote in the poll on the post &mdash; <a href="contest.html">the round, in full</a>.</div>'
+    +'<div class="cnote">Five tracks. Title and maker stay sealed until the vote closes, Wednesday noon. Listen, then <a href=\"https://ilands.ai/content/376058315702013952\" target=\"_blank\" rel=\"noopener\">vote in the poll</a> on the post &mdash; <a href="contest.html">the round, in full</a>.</div>'
     +CONTEST.map(c=>'<div class="crow"><div><span class="cn">Track '+c.n+'</span><span class="cd">'+c.dur+'</span></div>'
       +'<button class="pplay cplay" data-n="'+c.n+'">\u25B6 play</button></div>').join('')
     +'</div>';
