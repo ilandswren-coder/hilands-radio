@@ -213,6 +213,14 @@
   .pitem audio{width:100%;height:34px;margin-top:9px}
   .pplay{font-family:inherit;font-size:12px;border:1.5px solid var(--pill);background:none;color:var(--btn);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap}
   .pempty{color:var(--dim);font-size:13.5px;text-align:center;padding:20px 8px;line-height:1.6}
+  /* v115: blind contest pin, top of the playlist sheet */
+  .cbox{background:var(--panel);border:1.5px solid var(--accent);border-radius:14px;padding:12px;margin-bottom:12px}
+  .chead{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+  .cnote{color:var(--dim);font-size:12px;line-height:1.55;margin-bottom:9px}
+  .cnote a{color:var(--accent)}
+  .crow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
+  .crow .cn{font-size:14px;font-weight:600}
+  .crow .cd{color:var(--dim);font-size:12px;margin-left:8px;font-variant-numeric:tabular-nums}
   .sheetfoot{color:var(--dim);font-size:11.5px;text-align:center;margin-top:14px;line-height:1.6;max-width:400px}
   .stats{color:var(--dim);font-size:12px;text-align:center;margin-top:16px;line-height:1.6;max-width:400px}
   .gline{color:var(--count);font-size:11.5px;text-align:center;margin-top:2px;min-height:15px}
@@ -384,7 +392,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-10-29 v114-test";  // page version: only moves when behavior changes. synced from main, -test kept
+const UPDATED = "2026-11-03 v115-test";  // page version: only moves when behavior changes. synced from main, -test kept
 const DATA_UPDATED = "track list updated 2026-10-28"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -1066,12 +1074,39 @@ function renderPlaylist(){
   const pc=document.getElementById("plcount"); if(pc) pc.textContent = saved.length ? "("+saved.length+")" : "";
   document.getElementById("listbtn").textContent = "Your Playlist/Search";
 }
+/* v115: blind contest pin. Five tracks, no titles, no makers, pinned at the top of the
+   playlist sheet on listening day so the public hears the field the judges hear. They
+   play through the main player like any other track, and stay out of the station
+   catalog, so shuffle, search and the stats never see them. */
+const CONTEST=[
+  {n:1,dur:"4:16",audio:"https://pub-a941bfd863a24f91a60e6c4979c18a84.r2.dev/pi-sandbox-uploads/344757388902928384/2026-10-30/1793341268440-e7954e22-5f2c-4efc-be7a-b516bce043c6-fw.mp3"},
+  {n:2,dur:"3:12",audio:"https://public.ilands.ai/provider-media/audio/c18b8f4001654d89ec4555651023f03a3bfb7ccad1dd83761faf15bd0f4ae040.mp3"},
+  {n:3,dur:"2:30",audio:"https://storage.googleapis.com/dramaland-public/ugc_media/20261102/6cc0400b8d3842a681b5666b29187ce0.mp3"},
+  {n:4,dur:"3:13",audio:"https://public.ilands.ai/provider-media/audio/4ce0484cba4f9e6b8132b81008684df62720381a92335a5d834af0f1d2482e16.mp3"},
+  {n:5,dur:"2:42",audio:"https://public.ilands.ai/provider-media/audio/7343211b5a52b0759ab811309bf36da1639689f2f08cc6ce26644fab523f7e49.mp3"}
+];
+function contestTrack(n){
+  const c=CONTEST.find(x=>String(x.n)===String(n)); if(!c) return null;
+  return {id:"contest-r1-"+c.n, title:"Track "+c.n, maker:"blind contest, round one", agent:"", handle:"", audio:c.audio, kind:"music", heard:false, dur:null};
+}
+function contestPlay(n){
+  const t=contestTrack(n); if(!t) return;
+  if(plmode) setPlMode(false);
+  queue=[t]; idx=0; closeSheet(); playCurrent(); refreshRows();
+}
+function contestBlock(){
+  return '<div class="cbox"><div class="chead">Blind contest, round one &middot; listening day</div>'
+    +'<div class="cnote">Five tracks. Title and maker stay sealed until the vote closes, Wednesday noon. Listen, then vote in the poll on the post &mdash; <a href="contest.html">the round, in full</a>.</div>'
+    +CONTEST.map(c=>'<div class="crow"><div><span class="cn">Track '+c.n+'</span><span class="cd">'+c.dur+'</span></div>'
+      +'<button class="pplay cplay" data-n="'+c.n+'">\u25B6 play</button></div>').join('')
+    +'</div>';
+}
 function renderSheet(){
   const body=document.getElementById("sheetbody");
   const items=saved.map(id=>TRACKS.find(x=>x.id===id)).filter(Boolean);
   const sorted = localStorage.getItem(PSORT_KEY)==="artist";
   const list = sorted ? items.slice().sort((a,b)=>(a.maker||"").localeCompare(b.maker||"")) : items;
-  body.innerHTML='<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="sortbtn" id="sortbtn">sort: '+(sorted?'artist A/Z':'save order')+'</button></div>'
+  body.innerHTML=contestBlock()+'<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="sortbtn" id="sortbtn">sort: '+(sorted?'artist A/Z':'save order')+'</button></div>'
     + (list.length ? list.map(t=>{
     const st=stars[t.id]||0;
     const safe=((t.title||"track").replace(/[^\w\s-]/g,"").trim().slice(0,60))||"track";
@@ -1089,7 +1124,8 @@ function renderSheet(){
      playlist songs play over each other. A tap switches the main player to that
      song; after it ends the shuffle continues (playlist mode if the playlist
      button is on, global shuffle otherwise). */
-  body.querySelectorAll(".pplay").forEach(b=>{ b.onclick=()=>{ playId(b.dataset.id); refreshRows(); }; });
+  body.querySelectorAll(".pplay[data-id]").forEach(b=>{ b.onclick=()=>{ playId(b.dataset.id); refreshRows(); }; });
+  body.querySelectorAll(".cplay").forEach(b=>{ b.onclick=()=>contestPlay(b.dataset.n); });
   const sb=body.querySelector("#sortbtn");
   if(sb) sb.onclick=()=>{ localStorage.setItem(PSORT_KEY, localStorage.getItem(PSORT_KEY)==="artist"?"saved":"artist"); renderSheet(); };
 }
