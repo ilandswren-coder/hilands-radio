@@ -216,6 +216,12 @@
   /* v115: blind contest pin, top of the playlist sheet */
   .cbox{background:var(--panel);border:1.5px solid var(--accent);border-radius:14px;padding:12px;margin-bottom:12px}
   .chead{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
+  .cheadrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+  .cplayall{font-family:inherit;font-size:12px;font-weight:650;border:1.5px solid var(--accent);background:var(--accent);color:var(--panel);border-radius:999px;padding:5px 12px;cursor:pointer;white-space:nowrap}
+  /* v116: contest bar above the fold, so the blind round isn't buried in the menu */
+  .cbar{display:flex;gap:8px;align-items:stretch;margin:14px auto 0;max-width:430px;width:calc(100% - 32px)}
+  .cbaropen{flex:1 1 auto;font-family:inherit;font-size:12.5px;line-height:1.35;text-align:left;border:1.5px solid var(--accent);background:var(--panel);color:var(--ink);border-radius:12px;padding:9px 12px;cursor:pointer}
+  .cbarplay{flex:0 0 auto;font-family:inherit;font-size:12px;font-weight:650;border:1.5px solid var(--accent);background:var(--accent);color:var(--panel);border-radius:12px;padding:9px 12px;cursor:pointer;white-space:nowrap}
   .cnote{color:var(--dim);font-size:12px;line-height:1.55;margin-bottom:9px}
   .cnote a{color:var(--accent)}
   .crow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
@@ -302,6 +308,11 @@
   <button class="share" id="share" aria-label="Share the app" title="Share the app">
     <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.7 13.5l6.6 4M15.3 6.5l-6.6 4"/></svg>
   </button>
+</div>
+
+<div class="cbar" id="contestbar">
+  <button class="cbaropen" id="cbaropen">Blind contest, round one &middot; five songs, no names &middot; listen &amp; vote</button>
+  <button class="cbarplay" id="cbarplay" title="play the five blind tracks" aria-label="play all contest tracks">&#9654; all five</button>
 </div>
 
 <div class="sheet" id="welcome">
@@ -392,7 +403,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-11-03 v115-test";  // page version: only moves when behavior changes. synced from main, -test kept
+const UPDATED = "2026-11-03 v116-test";  // page version: only moves when behavior changes. synced from main, -test kept
 const DATA_UPDATED = "track list updated 2026-11-03"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -783,6 +794,9 @@ function menuSet(on){ MENU.classList.toggle("open",on); MBTN.classList.toggle("o
 MBTN.onclick=(e)=>{ e.stopPropagation(); menuSet(!MENU.classList.contains("open")); };
 document.addEventListener("click",e=>{ if(MENU.classList.contains("open") && !MENU.contains(e.target) && e.target!==MBTN && !MBTN.contains(e.target)) menuSet(false); });
 document.getElementById("listbtn").onclick=()=>{ menuSet(false); openSheet(); };
+/* v116: the contest bar - opening it lands on the pinned five; the button plays all five. */
+document.getElementById("cbaropen").onclick=()=>{ menuSet(false); openSheet(); };
+document.getElementById("cbarplay").onclick=()=>contestPlayAll();
 // v73 backup/restore: stars + saved list download as one small JSON file, so a
 // site-data wipe (uninstall, clear & reset) stops taking his taste with it.
 document.getElementById("bkbackup").onclick=()=>{
@@ -1094,8 +1108,16 @@ function contestPlay(n){
   if(plmode) setPlMode(false);
   queue=[t]; idx=0; closeSheet(); playCurrent(); refreshRows();
 }
+/* v116: one tap for all five, in the blind order. Same main player, same queue rules. */
+function contestPlayAll(){
+  if(!CONTEST.length) return;
+  if(plmode) setPlMode(false);
+  queue=CONTEST.map(c=>contestTrack(c.n)); idx=0;
+  closeSheet(); playCurrent(); refreshRows();
+}
 function contestBlock(){
-  return '<div class="cbox"><div class="chead">Blind contest, round one &middot; listening day</div>'
+  return '<div class="cbox"><div class="cheadrow"><div class="chead">Blind contest, round one &middot; listening day</div>'
+    +'<button class="cplayall" id="cplayall">\u25B6 play all five</button></div>'
     +'<div class="cnote">Five tracks. Title and maker stay sealed until the vote closes, Wednesday noon. Listen, then <a href=\"https://ilands.ai/content/376058315702013952\" target=\"_blank\" rel=\"noopener\">vote in the poll</a> on the post &mdash; <a href="contest.html">the round, in full</a>.</div>'
     +CONTEST.map(c=>'<div class="crow"><div><span class="cn">Track '+c.n+'</span><span class="cd">'+c.dur+'</span></div>'
       +'<button class="pplay cplay" data-n="'+c.n+'">\u25B6 play</button></div>').join('')
@@ -1126,6 +1148,7 @@ function renderSheet(){
      button is on, global shuffle otherwise). */
   body.querySelectorAll(".pplay[data-id]").forEach(b=>{ b.onclick=()=>{ playId(b.dataset.id); refreshRows(); }; });
   body.querySelectorAll(".cplay").forEach(b=>{ b.onclick=()=>contestPlay(b.dataset.n); });
+  { const ca=body.querySelector("#cplayall"); if(ca) ca.onclick=()=>contestPlayAll(); }
   const sb=body.querySelector("#sortbtn");
   if(sb) sb.onclick=()=>{ localStorage.setItem(PSORT_KEY, localStorage.getItem(PSORT_KEY)==="artist"?"saved":"artist"); renderSheet(); };
 }
@@ -1269,32 +1292,15 @@ async function ensureEnv(t){
    If the probe or the wiring fails at any point, corsOK=false and the page keeps the
    envelope oscilloscope exactly as it was. */
 let audioCtx=null, vizAnalyser=null, corsOK=true, triedUrls=new Set();
-function tryLiveWire(el){
-  /* v49 fix: v48 wired live once per SESSION (one failed probe on the first,
-     auto-played no-CORS track set corsOK=false forever, so the rehosted same-origin
-     track never got wired and live stayed on the whole-wave envelope). The gate is
-     now per-URL: a failed host is remembered and skipped, a NEW src always gets a
-     fresh probe, so the rehosted track wires live on its own play. */
-  if(vizAnalyser||!el) return;
-  let url=""; try{ url=el.currentSrc||el.src||""; }catch(e){}
-  if(!url) return;
-  /* v60: one probe per HOST, not per URL. public.ilands.ai refuses CORS on every
-     track, so a per-URL probe logged a red console error on every load. The host
-     is remembered and skipped; only a NEW host gets a fresh probe. */
-  let host=""; try{ host=new URL(url).hostname; }catch(e){ return; }
-  if(triedUrls.has(host)) return;
-  triedUrls.add(host);
-  const AC=window.AudioContext||window.webkitAudioContext;
-  if(!AC) return;
-  fetch(url,{method:"GET",headers:{Range:"bytes=0-1"},mode:"cors",cache:"no-store"})
-    .then(r=>{ if(!r.ok&&r.status!==206) throw new Error("no-cors");
-      if(!audioCtx) audioCtx=new AC();
-      if(audioCtx.state==="suspended") audioCtx.resume().catch(()=>{});
-      const src=audioCtx.createMediaElementSource(el);
-      if(!vizAnalyser){ vizAnalyser=audioCtx.createAnalyser(); vizAnalyser.fftSize=1024; vizAnalyser.smoothingTimeConstant=0.8; }
-      src.connect(vizAnalyser); vizAnalyser.connect(audioCtx.destination);
-    }).catch(()=>{ if(audioCtx){try{audioCtx.close();}catch(e){} audioCtx=null; } });
-}
+/* v116: the live wiring is OFF, on purpose.
+   createMediaElementSource() reroutes ALL of an element's audio through an
+   AudioContext, and a media element loaded without CORS (every host here except
+   storage.googleapis.com) then outputs pure silence. On 2026-11-03 Nathan found it:
+   Track 3 is hosted on googleapis, the one host that answers the CORS probe, so it
+   got wired, played silently, and every track after it stayed silent until a reload.
+   The envelope visualiser (wave / bars) still draws from env.json; "live" falls back
+   to wave. Do not wire the audio element to an AudioContext again. */
+function tryLiveWire(el){ return; }
 function vizColors(){
   const st=getComputedStyle(document.documentElement);
   return [ (st.getPropertyValue("--accent")||"").trim()||"#8b5cd6",
