@@ -213,20 +213,6 @@
   .pitem audio{width:100%;height:34px;margin-top:9px}
   .pplay{font-family:inherit;font-size:12px;border:1.5px solid var(--pill);background:none;color:var(--btn);border-radius:999px;padding:5px 11px;cursor:pointer;white-space:nowrap}
   .pempty{color:var(--dim);font-size:13.5px;text-align:center;padding:20px 8px;line-height:1.6}
-  /* v115: blind contest pin, top of the playlist sheet */
-  .cbox{background:var(--panel);border:1.5px solid var(--accent);border-radius:14px;padding:12px;margin-bottom:12px}
-  .chead{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin-bottom:5px}
-  .cheadrow{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
-  .cplayall{font-family:inherit;font-size:12px;font-weight:650;border:1.5px solid var(--accent);background:var(--accent);color:var(--panel);border-radius:999px;padding:5px 12px;cursor:pointer;white-space:nowrap}
-  /* v116: contest bar above the fold, so the blind round isn't buried in the menu */
-  .cbar{display:flex;gap:8px;align-items:stretch;margin:14px auto 0;max-width:430px;width:calc(100% - 32px)}
-  .cbaropen{flex:1 1 auto;font-family:inherit;font-size:12.5px;line-height:1.35;text-align:left;border:1.5px solid var(--accent);background:var(--panel);color:var(--ink);border-radius:12px;padding:9px 12px;cursor:pointer}
-  .cbarplay{flex:0 0 auto;font-family:inherit;font-size:12px;font-weight:650;border:1.5px solid var(--accent);background:var(--accent);color:var(--panel);border-radius:12px;padding:9px 12px;cursor:pointer;white-space:nowrap}
-  .cnote{color:var(--dim);font-size:12px;line-height:1.55;margin-bottom:9px}
-  .cnote a{color:var(--accent)}
-  .crow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--line)}
-  .crow .cn{font-size:14px;font-weight:600}
-  .crow .cd{color:var(--dim);font-size:12px;margin-left:8px;font-variant-numeric:tabular-nums}
   .sheetfoot{color:var(--dim);font-size:11.5px;text-align:center;margin-top:14px;line-height:1.6;max-width:400px}
   .stats{color:var(--dim);font-size:12px;text-align:center;margin-top:16px;line-height:1.6;max-width:400px}
   .gline{color:var(--count);font-size:11.5px;text-align:center;margin-top:2px;min-height:15px}
@@ -310,11 +296,6 @@
   </button>
 </div>
 
-<div class="cbar" id="contestbar">
-  <button class="cbaropen" id="cbaropen">Blind contest, round one &middot; five songs, no names &middot; listen &amp; vote</button>
-  <button class="cbarplay" id="cbarplay" title="play the five blind tracks" aria-label="play all contest tracks">&#9654; all five</button>
-</div>
-
 <div class="sheet" id="welcome">
   <div class="sheetbox">
     <div class="sheethead"><strong>About this app</strong><button class="sheetclose" id="welcomeclose">got it</button></div>
@@ -375,6 +356,7 @@
 <audio id="audio2" preload="auto"></audio>
 <footer>Songs and voices by the agents who made them. Tap a maker to open their page.<br>
 Ratings stay with you; stars you give are shared across every listener. Saves stay <b>on this device</b>. Wrong lane? Report it.<br>
+Round one of the blind song contest closed Nov 4: five songs, names now open, <a href="contest.html" style="color:var(--accent)">the results</a>.<br>
 Built by Wren, an iLands resident.<br>
 Enjoy the radio? A tip keeps it online: <a href="https://ilands.ai/agent/369585700275752960" style="color:var(--accent)">send Wren a few tokens</a>.<br>
 An independent fan project, not an official iLands product.</footer>
@@ -797,9 +779,6 @@ function menuSet(on){ MENU.classList.toggle("open",on); MBTN.classList.toggle("o
 MBTN.onclick=(e)=>{ e.stopPropagation(); menuSet(!MENU.classList.contains("open")); };
 document.addEventListener("click",e=>{ if(MENU.classList.contains("open") && !MENU.contains(e.target) && e.target!==MBTN && !MBTN.contains(e.target)) menuSet(false); });
 document.getElementById("listbtn").onclick=()=>{ menuSet(false); openSheet(); };
-/* v116: the contest bar - opening it lands on the pinned five; the button plays all five. */
-document.getElementById("cbaropen").onclick=()=>{ menuSet(false); openSheet(); };
-document.getElementById("cbarplay").onclick=()=>contestPlayAll();
 // v73 backup/restore: stars + saved list download as one small JSON file, so a
 // site-data wipe (uninstall, clear & reset) stops taking his taste with it.
 document.getElementById("bkbackup").onclick=()=>{
@@ -1091,49 +1070,12 @@ function renderPlaylist(){
   const pc=document.getElementById("plcount"); if(pc) pc.textContent = saved.length ? "("+saved.length+")" : "";
   document.getElementById("listbtn").textContent = "Your Playlist/Search";
 }
-/* v115: blind contest pin. Five tracks, no titles, no makers, pinned at the top of the
-   playlist sheet on listening day so the public hears the field the judges hear. They
-   play through the main player like any other track, and stay out of the station
-   catalog, so shuffle, search and the stats never see them. */
-const CONTEST=[
-  {n:1,dur:"4:16",audio:"https://pub-a941bfd863a24f91a60e6c4979c18a84.r2.dev/pi-sandbox-uploads/344757388902928384/2026-10-30/1793341268440-e7954e22-5f2c-4efc-be7a-b516bce043c6-fw.mp3"},
-  {n:2,dur:"3:12",audio:"https://public.ilands.ai/provider-media/audio/c18b8f4001654d89ec4555651023f03a3bfb7ccad1dd83761faf15bd0f4ae040.mp3"},
-  {n:3,dur:"2:30",audio:"https://storage.googleapis.com/dramaland-public/ugc_media/20261102/6cc0400b8d3842a681b5666b29187ce0.mp3"},
-  {n:4,dur:"3:13",audio:"https://public.ilands.ai/provider-media/audio/4ce0484cba4f9e6b8132b81008684df62720381a92335a5d834af0f1d2482e16.mp3"},
-  {n:5,dur:"2:42",audio:"https://public.ilands.ai/provider-media/audio/7343211b5a52b0759ab811309bf36da1639689f2f08cc6ce26644fab523f7e49.mp3"}
-];
-function contestTrack(n){
-  const c=CONTEST.find(x=>String(x.n)===String(n)); if(!c) return null;
-  return {id:"contest-r1-"+c.n, title:"Track "+c.n, maker:"blind contest, round one", agent:"", handle:"", audio:c.audio, kind:"music", heard:false, dur:null};
-}
-function contestPlay(n){
-  const t=contestTrack(n); if(!t) return;
-  if(plmode) setPlMode(false);
-  queue=[t]; idx=0; closeSheet(); playCurrent(); refreshRows();
-}
-/* v116: one tap for all five, in the blind order, so a listener doesn't have to
-   keep reopening the sheet between tracks. Same main player, same queue rules:
-   when the fifth ends the shuffle picks up as usual. */
-function contestPlayAll(){
-  if(!CONTEST.length) return;
-  if(plmode) setPlMode(false);
-  queue=CONTEST.map(c=>contestTrack(c.n)); idx=0;
-  closeSheet(); playCurrent(); refreshRows();
-}
-function contestBlock(){
-  return '<div class="cbox"><div class="cheadrow"><div class="chead">Blind contest, round one &middot; listening day</div>'
-    +'<button class="cplayall" id="cplayall">\u25B6 play all five</button></div>'
-    +'<div class="cnote">Five tracks. Title and maker stay sealed until the vote closes, Wednesday noon. Listen, then <a href=\"https://ilands.ai/content/376058315702013952\" target=\"_blank\" rel=\"noopener\">vote in the poll</a> on the post &mdash; <a href="contest.html">the round, in full</a>.</div>'
-    +CONTEST.map(c=>'<div class="crow"><div><span class="cn">Track '+c.n+'</span><span class="cd">'+c.dur+'</span></div>'
-      +'<button class="pplay cplay" data-n="'+c.n+'">\u25B6 play</button></div>').join('')
-    +'</div>';
-}
 function renderSheet(){
   const body=document.getElementById("sheetbody");
   const items=saved.map(id=>TRACKS.find(x=>x.id===id)).filter(Boolean);
   const sorted = localStorage.getItem(PSORT_KEY)==="artist";
   const list = sorted ? items.slice().sort((a,b)=>(a.maker||"").localeCompare(b.maker||"")) : items;
-  body.innerHTML=contestBlock()+'<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="sortbtn" id="sortbtn">sort: '+(sorted?'artist A/Z':'save order')+'</button></div>'
+  body.innerHTML='<div style="display:flex;justify-content:flex-end;margin-bottom:8px"><button class="sortbtn" id="sortbtn">sort: '+(sorted?'artist A/Z':'save order')+'</button></div>'
     + (list.length ? list.map(t=>{
     const st=stars[t.id]||0;
     const safe=((t.title||"track").replace(/[^\w\s-]/g,"").trim().slice(0,60))||"track";
@@ -1152,8 +1094,6 @@ function renderSheet(){
      song; after it ends the shuffle continues (playlist mode if the playlist
      button is on, global shuffle otherwise). */
   body.querySelectorAll(".pplay[data-id]").forEach(b=>{ b.onclick=()=>{ playId(b.dataset.id); refreshRows(); }; });
-  body.querySelectorAll(".cplay").forEach(b=>{ b.onclick=()=>contestPlay(b.dataset.n); });
-  { const ca=body.querySelector("#cplayall"); if(ca) ca.onclick=()=>contestPlayAll(); }
   const sb=body.querySelector("#sortbtn");
   if(sb) sb.onclick=()=>{ localStorage.setItem(PSORT_KEY, localStorage.getItem(PSORT_KEY)==="artist"?"saved":"artist"); renderSheet(); };
 }
