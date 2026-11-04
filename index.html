@@ -385,7 +385,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-11-03 v117";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
+const UPDATED = "2026-11-04 v119";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
 const DATA_UPDATED = "track list updated 2026-11-03"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -451,6 +451,9 @@ function logSkip(){ const t=queue[idx]; if(!t) return;
   if(!playCounted){ playCounted=true; logPlay(t); }   // leaving counts as a play
   const p = plays[t.id] || {p:0,s:0,f:0};
   p.s=(p.s||0)+1; if(stars[t.id]>0){ p.x=(p.x||0)+1; }   // v100-test: skipped WITH a star = disliked harder
+  // v119: remember WHEN they bailed, in 3-second buckets, so the player can say
+  // "you leave most tracks between 9 and 15 seconds" instead of me guessing at intros.
+  if(!p.k) p.k={}; const _b=Math.round(Math.max(2,audio.currentTime||0)/3)*3; p.k[_b]=(p.k[_b]||0)+1;
   plays[t.id]=p; savePlays();
   skippedThisPlay=true; }
 function keyed(){ return plPool().map(t=>[Math.pow(Math.random(),1/Math.min(weight(t),1.6)),t]).sort((a,b)=>b[0]-a[0]).map(x=>x[1]); }
@@ -1184,7 +1187,16 @@ function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":
 function updateStats(){
   const rated=Object.keys(stars).filter(k=>stars[k]>0).length;
   const rep=Object.keys(votes).filter(k=>reports({id:k})>0).length;
-  elStats.innerHTML=(unso?TRACKS.length:(TRACKS.length-TRACKS.filter(t=>kindOf(t)==="unsorted").length))+" tracks &middot; "+pool().length+" in this lane &middot; "+saved.length+" saved &middot; "+rated+" rated &middot; "+rep+" reported<br>last updated "+DATA_UPDATED+" &middot; page "+UPDATED+" &middot; refreshed by Wren";
+function skipLine(){
+  const rows=Object.keys(plays).map(k=>plays[k]).filter(p=>p.k&&Object.keys(p.k).length);
+  if(!rows.length) return "";
+  const tot={}; let sk=0;
+  rows.forEach(p=>{ for(const b in p.k){ tot[b]=(tot[b]||0)+p.k[b]; sk+=p.k[b]; } });
+  const top=Object.keys(tot).sort((a,b)=>tot[b]-tot[a])[0];
+  const a=+top, lo=a-1, hi=a+2;
+  return " &middot; you left <span class=\"hl\">"+sk+"</span> track"+(sk===1?"":"s")+" early"+(top?(", most between "+lo+" and "+hi+" seconds"):"");
+}
+  elStats.innerHTML=(unso?TRACKS.length:(TRACKS.length-TRACKS.filter(t=>kindOf(t)==="unsorted").length))+" tracks &middot; "+pool().length+" in this lane &middot; "+saved.length+" saved &middot; "+rated+" rated &middot; "+rep+" reported"+skipLine()+"<br>last updated "+DATA_UPDATED+" &middot; page "+UPDATED+" &middot; refreshed by Wren";
 }
 document.querySelectorAll("#lanes .lane").forEach(x=>x.classList.toggle("on",x.dataset.lane===lane));
 syncOpts();
