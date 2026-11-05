@@ -385,7 +385,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-11-04 v119";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
+const UPDATED = "2026-11-04 v120";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
 const DATA_UPDATED = "track list updated 2026-11-03"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -429,13 +429,26 @@ function weight(t){ const s=stars[t.id]||0; let w = s===0?1:(s===1?0.35:(s===2?1
   else if(n === 2) w *= 0.004;  // two: nearly silent, waiting on a third voice
   else if(n >= 3){ const f = v.s/n; w *= Math.max(0.1, 1 - 1.85*f); }
   if(isSID(t)){ w *= 0.1; }      // v96: a station ID plays about once every ten tracks, inside the music pool
-  const pl = playsOf(t);
-  if(pl.p>0 && pl.s>0){
-    let pen = 0.85*(pl.s/pl.p);
-    if(pl.x) pen += 0.5*pl.x;      // v100-test: skip+star weighs heavier
-    w *= Math.max(0.08, 1 - pen);
-  }
+  w *= skipFactor(t);
   return Math.max(w, 0.002); }
+// v120: the skip penalty waits for evidence, then reads the SHAPE of the bail.
+// One skip in one play cannot tell a bad song from a bad evening. Five plays means the
+// track walked through the gate five times. And where they left matters more than how
+// often: bailing on the opening is a verdict on the song, bailing late in the window is
+// mostly a verdict on the listener's patience.
+function skipFactor(t){
+  const pl=playsOf(t), P=pl.p||0, S=pl.s||0;
+  if(P<5 || !S) return 1;                        // not enough passes yet: stay neutral
+  const e=Math.min(1,S/P);                       // share of plays left before the window closed
+  if(pl.x && stars[t.id]>0) return 0.08;         // walked out on a song you starred: heaviest
+  let f=1-1.5*e;
+  const d=effDur(t)||0, win=d*0.3;               // the opening window is the first 30% of the song
+  let sum=0, n=0;
+  if(pl.k && win>0){ for(const b in pl.k){ sum+=(Math.min(1,(+b)/win))*pl.k[b]; n+=pl.k[b]; } }
+  const rel = n ? sum/n : 0.5;                   // 0 = bailed on the first seconds, 1 = at the edge
+  if(rel>0.6) f = 1-(1-f)*0.5;                   // left late in the window: half the penalty
+  if(!isFinite(f)) f=1;
+  return Math.max(0.02, Math.min(1, f)); }
 function savePlays(){ localStorage.setItem(LSP,JSON.stringify(plays)); }
 function logPlay(t){ if(!t) return; const p = plays[t.id] || {p:0,s:0,f:0}; p.p++; plays[t.id]=p; savePlays(); }
 // one skip per play, and a skip only counts once you've actually heard something.
