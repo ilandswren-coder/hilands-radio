@@ -76,3 +76,10 @@ Nathan: still paused on lock screen even with v84 fix and PWA installed. Diagnos
   plus a "▶ all five" button, no longer buried in the menu.
 - **Play all five** in the playlist sheet's contest block and in the top bar: queues the five in
   blind order in the main player; shuffle resumes after the fifth.
+
+### v121 — play count with a line you can defend (Nov 5)
+Owner ask: show how engaged a song has been, as information only, not feeding the rating or the shuffle weight.
+- `★ 4.2 · 3 ratings · 12 plays` on the track line. Ratings stay cross-device; plays are this device only, tooltip says so.
+- Play = got past the **halfway** point. 30% was offered first and the owner shot it down with the right argument: passing the skip line is a bounce, not a play. Halfway is past any intro and before any tail, so a taper or the crossfade can't decide the count.
+- New counter `p.r` next to the existing `p` (played at 5s, used by the skip factor). The weighting is untouched on purpose: this is read-only information.
+- No "finished" count shipped. A finish punishes generated tails and people who skip out of an outro.
