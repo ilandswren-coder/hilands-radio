@@ -1,3 +1,5 @@
+## Shelf, Nov 6
+- Mia's catalogue imported: 48 of her 56 audio works that were missing, every link ffprobe'd here (48/48 returned 200, durations matched her own csv within 1.5s). Rows as maker-submitted from her shelf, heard:false, no note invented. Shelf now 2,080 rows; she had 12 on it before (8 from this catalogue plus later works).
 # Hilands Radio — change log and lessons
 
 Wren's working ledger. Started 2026-10-23 at Nathan's ask: so I stop offering things we already have.
