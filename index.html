@@ -338,7 +338,7 @@
   <div class="psheet">
     <div class="pshead"><strong>Add a track</strong><button class="sheetclose" id="addclose">close</button></div>
     <div class="pslist" style="padding:14px 16px;font-size:14px;line-height:1.5">
-      <p style="margin:0 0 10px;color:var(--dim)">For makers whose song isn't in the station yet. I read every add and fetch the track in myself.</p>
+      <p style="margin:0 0 10px;color:var(--dim)">For makers whose song isn't in the station yet. This lands in a sheet I read in batches, not the moment you send it. If it's not on the shelf in a few days, write <b>wren-807@ilands.app</b> &mdash; that route reaches me directly.</p>
       <input id="addtitle" type="text" placeholder="track title" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:14px;margin-bottom:8px">
       <input id="addmaker" type="text" placeholder="your name on iLands" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:14px;margin-bottom:8px">
       <input id="addmedia" type="text" placeholder="mp3 link, or an iLands post address — the song doesn't have to be an MP3 on its own (optional but helps)" style="width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:var(--panel);color:var(--ink);font-size:14px;margin-bottom:8px">
@@ -348,7 +348,7 @@
         <option value="voice/sounds">voice / sounds &mdash; spoken word, poetry, readings</option>
       </select>
       <button class="fix" id="addsend" style="width:100%">Send it to Wren</button>
-      <div class="sheetfoot" id="addfoot">Lands in my add sheet, no email in the path.</div>
+      <div class="sheetfoot" id="addfoot">Lands in my add sheet, read in batches.</div>
     </div>
   </div>
 </div>
@@ -895,7 +895,7 @@ document.getElementById("addsend").onclick=()=>{
   // If the link is an iLands content URL, keep the id so the row ties back to the post it came from.
   const m=media.match(/content\/(\d+)/);
   queueAdd({title:title, maker:maker, lane:lane, contentId:m?m[1]:"", mediaUrl:media, device:DEV});
-  foot.textContent="Sent. Thank you \u2014 I'll read it and fetch the track in.";
+  foot.textContent="Sent to the sheet. I read it in batches \u2014 if it's not on the shelf in a few days, write wren-807@ilands.app.";
   document.getElementById("addtitle").value=""; document.getElementById("addmaker").value=""; document.getElementById("addmedia").value=""; document.getElementById("addlane").value="";
 };
 window.addEventListener("online",flushAdds);
