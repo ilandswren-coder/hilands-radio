@@ -386,7 +386,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-11-05 v122";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
+const UPDATED = "2026-11-07 v123";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
 const DATA_UPDATED = "track list updated 2026-11-05"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -540,7 +540,7 @@ function setMedia(t){
     nexttrack: ()=>{
       logSkip();
       const i=peekNext(); if(!queue[i]) return;
-      if(!armed){ armBuffered(); }
+      if(CROSSFADE && !armed){ armBuffered(); }
       if(armed && armed.i===i && !armed.started){
         startArmed();
         if(armed && armed.started){ finishSwap(); errStreak=0; return; }
@@ -629,8 +629,15 @@ function nextIx(fwd){
   if(fwd){ const i=idx+1; return i>=queue.length?0:i; }
   return idx>0?idx-1:0;
 }
-function next(fwd=true){
-  errStreak=0;
+function next(fwd=true, force=false){
+  // v123: one advance per press. A locked screen can dispatch nexttrack more than
+  // once for a single tap (notification + media session), and each dispatch used to
+  // advance again, so one press ran through several songs. errStreak is no longer
+  // zeroed here: it is reset on a real play event (el.onplay), so a run of failed
+  // loads now stops at the guard in el.onerror instead of walking the whole queue.
+  const nowAdv=Date.now();
+  if(!force && nowAdv-lastAdvance<600) return;
+  lastAdvance=nowAdv;
   const cur=queue[idx];
   if(cur) recentLeft[cur.id]={at:Date.now(), s:skippedThisPlay};
   if(fwd){ idx++; if(idx>=queue.length){ queue=keyed(); idx=0; } } else { if(idx>0) idx--; else { queue=keyed(); idx=0; } }
@@ -656,6 +663,11 @@ document.getElementById("resume").onclick=()=>{ setResume(false); attemptPlay();
 // two are crossfaded. If the page gets no tick near the boundary at all, the
 // plain ended -> next() path still runs as the fallback.
 let armed=null, FADE=3.0, lastSwap=0; // v79: self-heal stays clear of the boundary for 10s after a swap
+// v123 test lever: the two-element crossfade is the suspected cause of the lock-screen
+// runaway. Append ?x=0 to the page address to turn the handoff off and run the plain
+// one-element ended->next path. Nothing changes unless that is in the URL.
+let CROSSFADE = !/[?&]x=0(&|$)/.test(location.search);
+let lastAdvance = 0;
 function peekNext(){ return nextIx(true); }
 function armBuffered(){
   if(armed || !wantPlay) return;
@@ -747,7 +759,7 @@ function wire(el){
     // v83: if the crossfade handoff was refused, swap the src into the playing
     // element instead of falling back to a refused play().
     if(armed && (!armed.started || armed.refused)){ sameElSwap(armed.i); }
-    else if(!finishSwap()) next(true);
+    else if(!finishSwap()) next(true,true); // a natural end is never swallowed by the press guard
     // v86: the v78 retry timers fired after EVERY track change, healthy handoff
     // included, and could stomp a working crossfade into a pause. Removed. The
     // pre-end arm + crossfade is the path that survived lock screens since v21.
@@ -768,7 +780,7 @@ function wire(el){
     if(Date.now()-posTick>4000){ posTick=Date.now(); setPos(); }
     if(wantPlay && isFinite(audio.duration) && audio.duration>0){
       const rem=audio.duration-audio.currentTime;
-      if(!armed && rem<=8 && rem>0.6) armBuffered();
+      if(CROSSFADE && !armed && rem<=8 && rem>0.6) armBuffered();
       if(armed && !armed.started && rem<=FADE && rem>0.2) startArmed();
       // v86: the v85 boundary swap removed. On a throttled, screen-off page the
       // last timeupdate lands well before the boundary, so the swap fired too
