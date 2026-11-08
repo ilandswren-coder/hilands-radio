@@ -395,9 +395,11 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // v100-test: notification pause while locked does not auto-resume (Nathan's bug #2).
 // When the page returns to the front, or the network comes back, playback restarts
 // if the pause was not the listener's intent. Fallback for a paused session too.
-document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
+// v131: coming back to the front no longer grabs the audio back. A visible page that
+// paused is a mic session or a focus grab; the resume button is the way in.
+document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setResume(true); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-11-08 v130";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
+const UPDATED = "2026-11-08 v131";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
 const DATA_UPDATED = "track list updated 2026-11-05"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -622,7 +624,9 @@ function armGestureRecovery(){ if(gestureArmed) return; gestureArmed=true;
   const tryit=()=>{ if(wantPlay && audio.paused && !userPause){ gestureArmed=false; attemptPlay(); } else gestureArmed=false; };
   document.addEventListener("click", tryit, {once:true});
   document.addEventListener("touchstart", tryit, {once:true});
-  document.addEventListener("visibilitychange", ()=>{ if(!document.hidden && wantPlay && audio.paused && !userPause) attemptPlay(); });
+  // v131: a refusal on a hidden page retries when we're hidden again; on a visible
+  // page it hands back the resume button instead of grabbing the mic session.
+  document.addEventListener("visibilitychange", ()=>{ if(document.hidden){ if(wantPlay && audio.paused && !userPause) attemptPlay(); } else { gestureArmed=false; if(wantPlay && audio.paused && !userPause) setResume(true); } });
 }
 // v66 volume normalize: env.json's raw bars carry real loudness. Per track, a gain
 // factor lifts quiet masters and eases loud ones toward one target, so the shuffle
@@ -881,12 +885,16 @@ function wire(el){
 let posTick=0;
 wire(audio); wire(A2);
 setInterval(()=>{ if(wantPlay && !audio.paused && Date.now()-lastTick>15000){ lastTick=Date.now(); attemptPlay(); } // v76: no load(), it restarts the track
-  if(wantPlay && audio.paused && !userPause && Date.now()-lastSwap>10000 && Date.now()-lastTick>7000){ // v78 heal, v79: not within 10s of a swap
+  // v131: the v78 healer ran every 5s on a VISIBLE page too. During a dictation or
+  // assistant session that grabbed the audio back every 5 seconds, which is the
+  // stutter (music quiets, tries to come back, gets cut, repeats). Heal a hidden
+  // page only. Visible means: the resume button is the only way back in.
+  if(document.hidden && wantPlay && audio.paused && !userPause && Date.now()-lastSwap>10000 && Date.now()-lastTick>7000){ // v78 heal, v79: not within 10s of a swap
     lastTick=Date.now();
     if(audio.currentSrc && audio.currentTime>0 && !audio.ended) attemptPlay(); else playCurrent();
   }
 },5000);
-document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&wantPlay&&audio.paused) attemptPlay(); });
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&wantPlay&&audio.paused&&!userPause) setResume(true); });
 elStars.querySelectorAll(".star").forEach(s=>{ s.onclick=()=>{ const t=queue[idx]; if(!t) return; const v=+s.dataset.v;
   const _was=stars[t.id]||0;
   stars[t.id]=(_was===v)?0:v; localStorage.setItem(LS,JSON.stringify(stars));
