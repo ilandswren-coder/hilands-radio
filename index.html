@@ -240,6 +240,7 @@
   <button class="menurow" id="welcomebtn" style="margin-bottom:8px">About This App</button>
   <div class="menulabel">Saved Playlist <span class="pcount" id="plcount"></span></div>
   <button class="menurow" id="listbtn">Your Playlist/Search</button>
+  <button class="menurow" id="histbtn" style="margin-top:4px">History <span style="opacity:.55;font-size:11.5px;letter-spacing:.2px">last 10</span></button>
   <div class="menulabel" style="margin-top:14px">Unsorted</div>
   <button class="lane unso" id="unso">Include Unsorted Audio</button>
   <div class="menulabel" style="margin-top:14px">Theme</div>
@@ -330,9 +331,16 @@
 <div class="delwrap" id="delwrap"><div class="delbox"><h3>DELETE</h3><p>Remove this track from your saved playlist? Are you sure?</p><div class="row"><button class="yes" id="delyes">DELETE</button><button class="no" id="delno">Keep</button></div></div></div>
 <div class="sheet" id="artsheet">
   <div class="psheet">
-    <div class="pshead"><strong id="arthead">More from this maker</strong><button class="psbtn" id="arplayall" title="play all" aria-label="play all by this maker">▶</button><button class="psbtn" id="arclose" title="close" aria-label="close">✕</button></div>
+    <div class="pshead"><strong id="arthead">More from this maker</strong><button class="psbtn" id="arshuffle" title="shuffle everything by this maker" aria-label="shuffle everything by this maker">⤨</button><button class="psbtn" id="arplayall" title="play all" aria-label="play all by this maker">▶</button><button class="psbtn" id="arclose" title="close" aria-label="close">✕</button></div>
     <div class="pslist" id="artbody"></div>
     <div style="padding:10px 14px;border-top:1px solid var(--line)"><div class="sheetfoot" style="margin-top:0">Tap a track to play it now.</div></div>
+  </div>
+</div>
+<div class="sheet" id="histsheet">
+  <div class="psheet">
+    <div class="pshead"><strong>History</strong><button class="psbtn" id="histclose" title="close" aria-label="close">✕</button></div>
+    <div class="pslist" id="histbody"></div>
+    <div style="padding:10px 14px;border-top:1px solid var(--line)"><div class="sheetfoot" style="margin-top:0">The last 10 tracks this device started. It stays on the device, like stars and plays.</div></div>
   </div>
 </div>
 <div class="sheet" id="addsheet">
@@ -387,7 +395,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-11-08 v124";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
+const UPDATED = "2026-11-08 v125";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
 const DATA_UPDATED = "track list updated 2026-11-05"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -453,6 +461,28 @@ function skipFactor(t){
   return Math.max(0.02, Math.min(1, f)); }
 function savePlays(){ localStorage.setItem(LSP,JSON.stringify(plays)); }
 function logPlay(t){ if(!t) return; const p = plays[t.id] || {p:0,s:0,f:0}; p.p++; plays[t.id]=p; savePlays(); }
+/* v125: history. The last ten tracks this device actually started, newest first.
+   Device-only, like stars and plays: nothing here leaves the phone. A resume is not
+   a new entry, so a track you left paused all night appears once, not forty times. */
+const LSH = "hilands_radio_history_v1";
+let hist = load(LSH,"[]"); if(!Array.isArray(hist)) hist=[];
+function saveHist(){ try{ localStorage.setItem(LSH, JSON.stringify(hist)); }catch(e){} }
+function logHist(t){ if(!t) return;
+  if(hist.length && hist[0].id===String(t.id)) return;
+  hist.unshift({id:String(t.id), at:Date.now()});
+  hist=hist.slice(0,10); saveHist(); }
+function renderHist(){
+  const body=document.getElementById("histbody"); if(!body) return;
+  const rows=hist.map(h=>TRACKS.find(x=>String(x.id)===h.id)).filter(Boolean);
+  if(!rows.length){ body.innerHTML='<p class="pempty">Nothing played on this device yet. History starts once a track is going.</p>'; return; }
+  body.innerHTML=rows.map(t=>{
+    const cur=queue[idx]&&String(queue[idx].id)===String(t.id);
+    return '<div class="frow'+(cur?' fcur':'')+'" data-id="'+t.id+'">'
+      +'<div class="ftl">'+(cur?'\u25B8 ':'')+escapeHtml(t.title||"(untitled)")+'</div>'
+      +'<div class="fmk">'+escapeHtml(t.maker||"")+'</div></div>';
+  }).join('');
+  body.querySelectorAll(".frow").forEach(r=>{ r.onclick=()=>{ playId(r.dataset.id); refreshRows(); }; });
+}
 // one skip per play, and a skip only counts once you've actually heard something.
 // a rapid double-tap on a freshly loaded track must not bury it.
 let skippedThisPlay=false, enteredAt=0, playCounted=false, reachedCounted=false, recentLeft={};
@@ -607,7 +637,7 @@ function playCurrent(){
     delete recentLeft[t.id]; grace=true;
   }
   playCounted=grace; reachedCounted=false; skippedThisPlay=false; enteredAt=Date.now();
-  wantPlay=true; userPause=false; setResume(false); setNote("");
+  wantPlay=true; userPause=false; setResume(false); setNote(""); clearAf();
   if(typeof armed!=="undefined" && armed){ try{ armed.el.pause(); }catch(e){} armed=null; }
   try{ setVol(audio,1,t); }catch(e){}
   audio.src=t.audio; try{ audio.load(); }catch(e){}
@@ -651,7 +681,7 @@ elPlay.onclick=()=>{
     if(audio.currentSrc && audio.currentTime>0 && !audio.ended){
       wantPlay=true; setResume(false); setNote(""); attemptPlay();
     } else { playCurrent(); }
-  } else { wantPlay=false; userPause=true; audio.pause(); if(envRaf){ cancelAnimationFrame(envRaf); envRaf=0; } if(armed) try{ armed.el.pause(); }catch(e){} }
+  } else { wantPlay=false; userPause=true; clearAf(); audio.pause(); if(envRaf){ cancelAnimationFrame(envRaf); envRaf=0; } if(armed) try{ armed.el.pause(); }catch(e){} }
 };
 document.getElementById("next").onclick=()=>{ logSkip(); next(true); };
 document.getElementById("prev").onclick=()=>next(false);
@@ -741,17 +771,48 @@ function rebuildAudioSession(){
     audio = fresh;
   }catch(e){}
 }
+/* v125: audio focus, the voice-assistant case. Google Assistant / voice-to-text takes
+   the output away and the element pauses. That part is correct. What came after was not:
+   the retry path restarted the song while the mic session was still open. Two causes.
+   (a) A buffered-but-unstarted handoff element could still be sitting there, so a
+       restart played two sources at once. That is the stutter.
+   (b) The two fixed retries at 700ms and 2500ms land squarely inside a dictation session.
+   Now: an unprompted pause drops any unstarted handoff, a second element is never left
+   playing, and recovery uses a widening backoff (0.9s, 3s, 8s) that gives up instead of
+   hammering. ?af=0 restores the old two-retry shape for comparison. */
+const AF_ON = !/[?&]af=0(&|$)/.test(location.search);
+const AF_WAITS=[900,3000,8000];
+let afRetry=0, afLevel=0;
+function clearAf(){ if(afRetry){ clearTimeout(afRetry); afRetry=0; } afLevel=0; }
+function pauseOther(keep){ const o=(keep===audio)?A2:audio; try{ if(o && !o.paused) o.pause(); }catch(e){} }
+function scheduleAfRetry(){
+  if(!AF_ON || afRetry || afLevel>=AF_WAITS.length) return;
+  const wait=AF_WAITS[afLevel++];
+  afRetry=setTimeout(()=>{ afRetry=0;
+    if(!wantPlay || userPause || !audio.paused) return;
+    if(Date.now()-lastSwap<=10000) return;            // a track change is not a focus loss
+    if(armed && armed.started) return;                // mid-handoff: finishSwap owns this
+    pauseOther(audio);
+    attemptPlay();
+    scheduleAfRetry();
+  }, wait);
+}
 function wire(el){
   const mine=()=>el===audio;
   const dropArmed=()=>{ if(armed && armed.el===el && !armed.started) armed=null; };
   el.addEventListener("play",()=>{ if(!mine()) return; const t=queue[idx]; if(t) document.title=(t.title||"Hilands Radio")+" \u00b7 "+((t.maker)||"")+" \u2014 Hilands Radio"; });
-  el.onplay=()=>{ if(!mine()) return; errStreak=0; lastTick=Date.now(); setIcon(true); setResume(false); ms("playbackState","playing"); setPos(); tryLiveWire(el); if(!envRaf&&wantPlay&&!el.paused) envRaf=requestAnimationFrame(drawViz); };
+  el.onplay=()=>{ if(!mine()) return; clearAf(); logHist(queue[idx]); errStreak=0; lastTick=Date.now(); setIcon(true); setResume(false); ms("playbackState","playing"); setPos(); tryLiveWire(el); if(!envRaf&&wantPlay&&!el.paused) envRaf=requestAnimationFrame(drawViz); };
   el.onpause=()=>{ if(!mine()) return; setIcon(false); ms("playbackState","paused");
     // v76: a pause nobody asked for (buffer underrun, OS audio focus, backgrounded
-    // play() drop) is retried, twice, so the radio self-heals instead of sitting silent.
+    // play() drop) is retried, so the radio self-heals instead of sitting silent.
+    // v125: see the AF_ON block above. The retry widens now, and a stale handoff is dropped.
     if(wantPlay && !userPause && !el.ended && Date.now()-lastSwap>10000){
-      setTimeout(()=>{ if(wantPlay && el.paused && !userPause && Date.now()-lastSwap>10000) attemptPlay(); }, 700);
-      setTimeout(()=>{ if(wantPlay && el.paused && !userPause && Date.now()-lastSwap>10000) attemptPlay(); }, 2500);
+      if(armed && !armed.started) armed=null;
+      if(AF_ON){ if(!(armed && armed.started)) pauseOther(el); scheduleAfRetry(); }
+      else {
+        setTimeout(()=>{ if(wantPlay && el.paused && !userPause && Date.now()-lastSwap>10000) attemptPlay(); }, 700);
+        setTimeout(()=>{ if(wantPlay && el.paused && !userPause && Date.now()-lastSwap>10000) attemptPlay(); }, 2500);
+      }
     }
   };
   el.onended=()=>{ if(!mine()) return;
@@ -821,6 +882,8 @@ function menuSet(on){ MENU.classList.toggle("open",on); MBTN.classList.toggle("o
 MBTN.onclick=(e)=>{ e.stopPropagation(); menuSet(!MENU.classList.contains("open")); };
 document.addEventListener("click",e=>{ if(MENU.classList.contains("open") && !MENU.contains(e.target) && e.target!==MBTN && !MBTN.contains(e.target)) menuSet(false); });
 document.getElementById("listbtn").onclick=()=>{ menuSet(false); openSheet(); };
+document.getElementById("histbtn").onclick=()=>{ menuSet(false); renderHist(); document.getElementById("histsheet").classList.add("open"); };
+document.getElementById("histclose").onclick=()=>document.getElementById("histsheet").classList.remove("open");
 // v73 backup/restore: stars + saved list download as one small JSON file, so a
 // site-data wipe (uninstall, clear & reset) stops taking his taste with it.
 document.getElementById("bkbackup").onclick=()=>{
@@ -1171,6 +1234,9 @@ function openArtist(t){
   }).join('') || '<p class="pempty">Only this one in the station.</p>';
   body.querySelectorAll(".frow").forEach(r=>{ r.onclick=()=>{ playId(r.dataset.id); refreshRows(); }; });
   { const pa=document.getElementById("arplayall"); if(pa) pa.onclick=()=>{ queue=list.slice(); idx=0; playCurrent(); };
+    const ps=document.getElementById("arshuffle"); if(ps) ps.onclick=()=>{ const s=list.slice();
+      for(let i=s.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); const q=s[i]; s[i]=s[j]; s[j]=q; }
+      queue=s; idx=0; playCurrent(); };
     document.getElementById("artsheet").classList.add("open");
   const ac=document.getElementById("arclose"); if(ac) ac.onclick=()=>document.getElementById("artsheet").classList.remove("open"); }
 }
