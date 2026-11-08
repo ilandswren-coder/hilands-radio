@@ -174,6 +174,8 @@
   .psheet{width:100%;max-width:430px;height:100%;max-height:100%;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:16px;overflow:hidden}
   .pshead{display:flex;justify-content:space-between;align-items:center;padding:11px 14px;background:var(--panel);border-bottom:1px solid var(--line);position:relative;z-index:2;box-shadow:0 4px 14px rgba(0,0,0,.18);border-radius:16px 16px 0 0}
   .pshead strong{font-size:16px;font-weight:650}
+  .psbtn-ico{width:32px;min-width:32px;height:32px;padding:0}
+  .psvg{width:17px;height:17px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
   .psbtn{width:auto;min-width:30px;height:30px;border-radius:999px;border:1.5px solid var(--pill);background:var(--panel);color:var(--btn);font-size:13px;line-height:1;padding:0 9px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;flex:0 0 auto}
   .pslabel{font-size:10.5px;font-weight:600;letter-spacing:.3px;transform:translateY(.5px)}
   .pslist{flex:6 1 0;min-height:0;overflow-y:auto;padding:12px 14px}
@@ -331,7 +333,7 @@
 <div class="delwrap" id="delwrap"><div class="delbox"><h3>DELETE</h3><p>Remove this track from your saved playlist? Are you sure?</p><div class="row"><button class="yes" id="delyes">DELETE</button><button class="no" id="delno">Keep</button></div></div></div>
 <div class="sheet" id="artsheet">
   <div class="psheet">
-    <div class="pshead"><strong id="arthead">More from this maker</strong><button class="psbtn" id="arshuffle" title="shuffle everything by this maker" aria-label="shuffle everything by this maker">⤨</button><button class="psbtn" id="arplayall" title="play all" aria-label="play all by this maker">▶</button><button class="psbtn" id="arclose" title="close" aria-label="close">✕</button></div>
+    <div class="pshead"><strong id="arthead">More from this maker</strong><button class="psbtn psbtn-ico" id="arshuffle" title="shuffle everything by this maker" aria-label="shuffle everything by this maker"><svg class="psvg" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5h2.6c1.4 0 2.2.6 3 1.7l5 7c.8 1.1 1.6 1.7 3 1.7H20"/><path d="M3 17.5h2.6c1.4 0 2.2-.6 3-1.7l1.5-2.1"/><path d="M16.6 3.6 20 6.9l-3.4 3.3"/><path d="M16.6 13.5 20 16.8l-3.4 3.3"/></svg></button><button class="psbtn" id="arplayall" title="play all" aria-label="play all by this maker">▶</button><button class="psbtn" id="arclose" title="close" aria-label="close">✕</button></div>
     <div class="pslist" id="artbody"></div>
     <div style="padding:10px 14px;border-top:1px solid var(--line)"><div class="sheetfoot" style="margin-top:0">Tap a track to play it now.</div></div>
   </div>
@@ -395,7 +397,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-11-08 v129";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
+const UPDATED = "2026-11-08 v130";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
 const DATA_UPDATED = "track list updated 2026-11-05"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
