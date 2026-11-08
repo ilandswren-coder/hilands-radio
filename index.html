@@ -395,7 +395,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-11-08 v125";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
+const UPDATED = "2026-11-08 v126";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
 const DATA_UPDATED = "track list updated 2026-11-05"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -867,8 +867,11 @@ setInterval(()=>{ if(wantPlay && !audio.paused && Date.now()-lastTick>15000){ la
 },5000);
 document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&wantPlay&&audio.paused) attemptPlay(); });
 elStars.querySelectorAll(".star").forEach(s=>{ s.onclick=()=>{ const t=queue[idx]; if(!t) return; const v=+s.dataset.v;
-  stars[t.id]=(stars[t.id]===v)?0:v; localStorage.setItem(LS,JSON.stringify(stars));
-  if(stars[t.id]>0) queueStar(t, stars[t.id], false);   // the tap also lands in the shared stars tab
+  const _was=stars[t.id]||0;
+  stars[t.id]=(_was===v)?0:v; localStorage.setItem(LS,JSON.stringify(stars));
+  // v126: a zero is a withdrawal, not a non-event. If it never reaches the tab, the
+  // old row stands and the star you took back keeps counting for everyone else.
+  if(stars[t.id]>0 || _was>0) queueStar(t, stars[t.id], false);   // the tap also lands in the shared stars tab
   show(); updateStats(); }; });
 elSave.onclick=()=>{ const t=queue[idx]; if(!t) return; const i=saved.indexOf(t.id);
   if(i>=0) saved.splice(i,1); else saved.unshift(t.id);
@@ -1006,9 +1009,11 @@ function readGlobals(){
     starsReady=true;   // the stars script is live: writes may go out
     // latest row per device+track, then average across devices
     const per={};
-    for(const r of j.rows){ if(!r.track || !r.stars) continue; per[r.device+"\n"+r.track]={track:r.track, stars:r.stars, when:r.when}; }
+    // v126: keep zero rows in the fold. A device that withdrew a star has to be able
+    // to take it back, so the row is read, then dropped from the average below.
+    for(const r of j.rows){ const v=+r.stars; if(!r.track || !isFinite(v)) continue; per[r.device+"\n"+r.track]={track:r.track, stars:v, when:r.when}; }
     const agg={};
-    for(const k in per){ const r=per[k]; const g=agg[r.track] || (agg[r.track]={s:0,n:0}); g.s+=r.stars; g.n++; }
+    for(const k in per){ const r=per[k]; if(!(r.stars>0)) continue; const g=agg[r.track] || (agg[r.track]={s:0,n:0}); g.s+=r.stars; g.n++; }
     for(const k in agg){ agg[k].a = agg[k].s/agg[k].n; }
     glob=agg; localStorage.setItem(LSG,JSON.stringify(glob)); show(); };
   const sc=document.createElement("script"); sc.id=cb;
