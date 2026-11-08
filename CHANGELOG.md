@@ -1,3 +1,12 @@
+# v127 (2026-11-08)
+
+- **Skip gate lowered from 5 plays to 3.** Nathan's call. A skip still waits for
+  evidence so one bad evening can't bury a song, but three passes is enough to
+  separate a bad song from a bad mood and gets a dead track out of rotation sooner.
+  Same shape underneath: early bails bite harder than late ones, a skip on a starred
+  track is still the heaviest. At three plays one early bail reads ~0.5 weight, one
+  late bail ~0.75, a starred-skip 0.08; under three plays it stays neutral.
+
 # v123 (2026-11-07)
 
 - **Skip guard.** One advance per press. A locked screen can dispatch `nexttrack`
