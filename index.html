@@ -395,7 +395,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // if the pause was not the listener's intent. Fallback for a paused session too.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setTimeout(()=>{ if(wantPlay && audio.paused && !userPause){ attemptPlay(); setResume(false); } }, 800); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-11-08 v127";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
+const UPDATED = "2026-11-08 v128";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
 const DATA_UPDATED = "track list updated 2026-11-05"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -451,7 +451,18 @@ function skipFactor(t){
   const pl=playsOf(t), P=pl.p||0, S=pl.s||0;
   if(P<3 || !S) return 1;                        // v127: gate lowered from 5 to 3 (owner call)
   const e=Math.min(1,S/P);                       // share of plays left before the window closed
-  if(pl.x && stars[t.id]>0) return 0.08;         // walked out on a song you starred: heaviest
+  // v128: a starred-skip no longer flattens every song the same way. A 3-star you walked out
+  // of once can be a mood; a 1-star you walked out of is a verdict. Base is the worst case at
+  // total walkout, and the rate of walkouts moves you toward it (one bail in three plays is a
+  // third of the way there). Owner's frame: 3 stars + skip = very little, 1 and 2 = far apart.
+  const st = stars[t.id]||0;
+  if(pl.x && st>0){
+    const base = st===1?0.10:(st===2?0.40:0.85);
+    const r = Math.min(1, (pl.x||0)/P);
+    let f = 1-(1-base)*r;
+    if(!isFinite(f)) f=1;
+    return Math.max(0.02, Math.min(1, f));
+  }
   let f=1-1.5*e;
   const d=effDur(t)||0, win=d*0.3;               // the opening window is the first 30% of the song
   let sum=0, n=0;
