@@ -400,7 +400,7 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // paused is a mic session or a focus grab; the resume button is the way in.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setResume(true); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-11-08 v131";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
+const UPDATED = "2026-11-14 v132";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
 const DATA_UPDATED = "track list updated 2026-11-05"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
       LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
@@ -591,7 +591,11 @@ function setMedia(t){
       if(CROSSFADE && !armed){ armBuffered(); }
       if(armed && armed.i===i && !armed.started){
         startArmed();
-        if(armed && armed.started){ finishSwap(); errStreak=0; return; }
+        // v132: a refusal inside startArmed already swapped onto the playing element
+        // (armed is null then). Only a handoff that was allowed to start gets committed;
+        // one still waiting on its promise falls through to the guarded advance.
+        if(!armed) return;
+        if(armed.started && !armed.refused){ finishSwap(); errStreak=0; return; }
       }
       next(true);
     },
@@ -611,8 +615,15 @@ function setPos(){
 function setIcon(p){ picon.setAttribute("d",p?"M6 5h4v14H6zM14 5h4v14h-4z":"M8 5v14l11-7z"); }
 function setResume(on){ document.getElementById("resume").style.display=on?"inline-block":"none"; }
 function setNote(m){ const n=document.getElementById("note"); n.textContent=m||""; n.style.display=m?"block":"none"; }
+let refusedTaps=0;
 function attemptPlay(){ const p=audio.play(); if(!p||!p.catch) return;
+  p.then(()=>{ refusedTaps=0; });
   p.catch(()=>{ const r=()=>{ audio.removeEventListener("canplay",r); audio.play().catch(()=>{ setResume(true); armGestureRecovery(); }); };
+    // v132: the "nothing plays until I restart the app" case. Two refusals in a row on a
+    // page the listener is looking at is not a missing gesture, it is a wedged session.
+    // Tear the element down and start the track clean, which is what the restart did.
+    if(!document.hidden && ++refusedTaps>=2){ refusedTaps=0; try{ rebuildAudioSession(); }catch(e){} playCurrent(); return; }
+    if(!document.hidden) setTimeout(()=>{ refusedTaps=0; },4000);
     if(audio.readyState>=3) r(); else audio.addEventListener("canplay",r,{once:true}); });
 }
 // v87: lock-screen handoff refusal recovery. On a locked screen the next track's
@@ -732,13 +743,23 @@ function armBuffered(){
 }
 function startArmed(){
   if(!armed || armed.started) return;
-  armed.started=true;
-  try{ setVol(armed.el,0,queue[armed.i]); }catch(e){}
+  const a=armed, i=a.i;
+  a.started=true;
+  try{ setVol(a.el,0,queue[i]); }catch(e){}
   // v86: metadata stays on the OLD track until the crossfade actually finishes.
   // v82 updated it at crossfade START, so for the whole overlap the lock screen
   // described the next track while the previous one was still playing.
-  const p=armed.el.play();
-  if(p&&p.catch) p.catch(()=>{ armed.refused=true; armGestureRecovery(); });
+  // v132: the refusal is handled HERE, not left to the caller. A locked screen can
+  // refuse this play(); the old code set started=true before the promise settled, so
+  // finishSwap() paused the element that WAS allowed to play and switched to a dead
+  // one. A forward skip read as a pause. Now a refusal drops the handoff and swaps
+  // the next track's src into the element that already holds play permission.
+  const p=a.el.play();
+  if(!p||!p.catch) return;
+  p.catch(()=>{ a.refused=true; a.started=false;
+    if(armed===a) armed=null;
+    if(!sameElSwap(i)) armGestureRecovery();
+  });
 }
 // v83: on a locked screen the play() for the pre-buffered second element can be
 // refused (no gesture, throttled page). Dropping armed used to fall through to
