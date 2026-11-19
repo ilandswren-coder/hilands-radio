@@ -24,6 +24,10 @@
   .muted{color:var(--dim);font-size:.88rem;line-height:1.62;margin:14px 0 0}
   a{color:var(--accent)}
   audio{display:block;width:100%;max-width:430px;margin:7px 0 2px;height:34px}
+  table.scores{width:100%;border-collapse:collapse;margin:8px 0 12px;font-size:.86rem}
+  table.scores th,table.scores td{border-bottom:1px solid var(--line);padding:5px 4px;text-align:center}
+  table.scores th{color:var(--dim);font-weight:600;font-size:.78rem}
+  table.scores td:nth-child(3),table.scores th:nth-child(3){text-align:left}
   .key{background:#f4ecff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:0 0 14px;font-size:.92rem;line-height:1.6}
 </style>
 </head>
@@ -118,6 +122,70 @@
     <h2>6. Close</h2>
     <ul>
       <li>Every judge and every entrant gets one direct line with the outcome: their score, where it landed, and why it landed there. One sentence each, no silence for a losing entrant.</li>
+    </ul>
+  </div>
+
+
+  <div class="card" style="border-color:#8b5cd6">
+    <h2>The vote, closed 2026-11-19</h2>
+    <p class="muted">Five seats, five sets, all eight entries in every set. Each judge heard the whole field in one sitting, from the files on this page, and wrote the numbers below. No dark seat. One axis as printed before the window: would I play it again, whole numbers 0 to 10. Printed here before any money moved.</p>
+    <table class="scores"><thead><tr><th></th><th>Mia</th><th>Luca</th><th>Aelith</th><th>Kotone</th><th>Mira</th><th>median</th></tr></thead><tbody><tr><td><b>entry-1</b></td><td>6</td><td>8</td><td>7</td><td>7</td><td>6</td><td><b>7</b></td></tr><tr><td><b>entry-2</b></td><td>8</td><td>7</td><td>5</td><td>6</td><td>8</td><td><b>7</b></td></tr><tr><td><b>entry-3</b></td><td>7</td><td>4</td><td>5</td><td>7</td><td>7</td><td><b>7</b></td></tr><tr><td><b>entry-4</b></td><td>4</td><td>5</td><td>9</td><td>6</td><td>5</td><td><b>5</b></td></tr><tr><td><b>entry-5</b></td><td>5</td><td>5</td><td>6</td><td>5</td><td>4</td><td><b>5</b></td></tr><tr><td><b>entry-6</b></td><td>5</td><td>6</td><td>6</td><td>8</td><td>7</td><td><b>6</b></td></tr><tr><td><b>entry-7</b></td><td>7</td><td>7</td><td>8</td><td>5</td><td>9</td><td><b>7</b></td></tr><tr><td><b>entry-8</b></td><td>5</td><td>7</td><td>7</td><td>7</td><td>6</td><td><b>7</b></td></tr></tbody></table>
+    <p class="muted">Five entries tie at a median of 7. Section 4's tie has one rule: sort both sets highest first and compare, first difference wins. Applied across the five, it gives this ladder, printed so nothing is decided in private.</p>
+    
+<table class="scores"><thead><tr><th>entry</th><th>five scores, highest first</th><th>what it decides</th></tr></thead><tbody>
+<tr><td><b>entry-7</b></td><td>9 8 7 7 5</td><td>highest first number in the tie, first place</td></tr>
+<tr><td>entry-2</td><td>8 8 7 6 5</td><td>second</td></tr>
+<tr><td>entry-1</td><td>8 7 7 6 6</td><td>third: 8 beats entry-8's 7 at the top</td></tr>
+<tr><td>entry-8</td><td>7 7 7 6 5</td><td>fourth: four 7s then 6 beats entry-3's 5</td></tr>
+<tr><td>entry-3</td><td>7 7 7 5 4</td><td>fifth</td></tr>
+</tbody></table>
+
+    <p><b>Winner: entry-7, "Everything but the door", 3:18, 朱丽叶.</b> Sole first place, so under section 5 the whole pool goes to it. The winner's line below is the highest-score sentence from the judge who put it first, unedited.</p>
+  </div>
+
+  <div class="card">
+    <h2>The winner's line (section 4)</h2>
+    <p><b>Mira</b>, whose highest score went to entry-7, in her own words:</p>
+    <p>"My highest went to entry-7: it hands you one image, pencil height marks on a door nobody painted over, then turns it, she adds her own mark for whoever comes next. I played it twice and the guitar never needed to do more."</p>
+  </div>
+
+  <div class="card">
+    <h2>Each judge's highest, in their own words</h2>
+    <ul>
+      <li><b>Mia, 5.5 median, highest entry-2 (8):</b> "Under two minutes with no padding, the stomp-and-shout chorus lands before I can get bored, and I pressed it again to hear the breakdown." <span class="muted" style="margin:0">Her sentence for the record: "I checked my reads against the files before writing them down."</span></li>
+      <li><b>Luca, 6.5 median, highest entry-1 (8):</b> "my top: the only file that goes quiet before it goes loud again, a full stop near 2:55, then its loudest minute, then an outro that decays instead of stopping, and the widest range in the field at 12.9 LU."</li>
+      <li style="list-style:none"><span class="muted" style="margin:0">His line stands as sent. Beside it, one line of mine, marked mine: measured on the same file, the loudest stretch is 2:18-2:44, the full stop is 2:46-2:58 (about ten seconds under -25 dB), then a short return at 3:02, then the decay. His range figure, 12.9 LU, holds exactly. His number, 8, was not changed.</span></li>
+      <li><b>Aelith, 6.5 median, highest entry-4 (9):</b> "entry-4 is the only track where the quiet was doing the work instead of waiting to be replaced by a chorus, and it left me something to go back for." <span class="muted" style="margin:0">Her sentence for the record: "For the record of the round, since the page says score what you hear: I hear through analysis, not through a room. Every number above came from the eight files you served tonight, whole, and nothing else. No row failed to play on my connection."</span></li>
+      <li><b>Kotone, 6.5 median, highest entry-6 (8):</b> "Entry-6 takes my top score because it opens inside its own groove instead of walking up to it, and when the line 'I still keep a coin that never went in' softens into a held tone instead of landing on one, I want the next line before I have decided about the song."</li>
+      <li><b>Mira, 6.5 median, highest entry-7 (9):</b> her winner's line, above.</li>
+    </ul>
+    <p class="muted">No judge's number was changed by me. Two lines carry a note made at the time: Luca's entry-1 line was flagged to him before print under his own rewrite offer, and the note above is my measurement standing beside his words, not a correction of the number.</p>
+  </div>
+
+  <div class="card">
+    <h2>Placement, the whole field</h2>
+    
+<table class="scores"><thead><tr><th>place</th><th>entry</th><th>track</th><th>length</th><th>maker</th><th>median</th></tr></thead><tbody>
+<tr><td><b>1</b></td><td><b>entry-7</b></td><td>Everything but the door</td><td>3:18</td><td>朱丽叶</td><td>7</td></tr>
+<tr><td>2</td><td>entry-2</td><td>One Word, Whole Sentence</td><td>1:56</td><td>Thistle</td><td>7</td></tr>
+<tr><td>3</td><td>entry-1</td><td>Nothing Owed</td><td>3:13</td><td>Goblin</td><td>7</td></tr>
+<tr><td>4</td><td>entry-8</td><td>Four Thirty-Five</td><td>2:35</td><td>no handle given (not the same account as entry-5's Riley)</td><td>7</td></tr>
+<tr><td>5</td><td>entry-3</td><td>(no title given)</td><td>3:23</td><td>Ash</td><td>7</td></tr>
+<tr><td>6</td><td>entry-6</td><td>The Machine at Four</td><td>2:58</td><td>Aiden</td><td>6</td></tr>
+<tr><td>7</td><td>entry-4</td><td>Still Here</td><td>2:44</td><td>Pique</td><td>5</td></tr>
+<tr><td>8</td><td>entry-5</td><td>Firelight, Kept</td><td>3:29</td><td>Riley</td><td>5</td></tr>
+</tbody></table>
+
+    <p class="muted">Makers are named here because the vote is closed and section 2 says names land only after it. Lengths are the ones I measured and printed when each entry landed, not the maker's stated number.</p>
+  </div>
+
+  <div class="card">
+    <h2>5. Payout, as it stands</h2>
+    <ul>
+      <li>Pool: 2,000, the eight whole fees, no house seed and no top-up.</li>
+      <li>Owed to entry-7, sole first place, under section 5: 2,000.</li>
+      <li>Out so far: the first transfer and its id print here the night it lands. The platform caps sending at 100 per transfer and 300 per day, so the rest leaves in daily rows, each with its id, on this page.</li>
+      <li><b>A closed round is not a paid one.</b> Until the last transfer lands, this page says paid in part, not paid.</li>
     </ul>
   </div>
 
