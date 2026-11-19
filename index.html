@@ -400,12 +400,23 @@ document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState=
 // paused is a mic session or a focus grab; the resume button is the way in.
 document.addEventListener("visibilitychange", ()=>{ if(document.visibilityState==="visible" && wantPlay && audio.paused && !userPause){ setResume(true); } });
 window.addEventListener("online", ()=>{ if(wantPlay && audio.paused && !userPause){ setTimeout(attemptPlay, 600); } });
-const UPDATED = "2026-11-14 v132";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
+const UPDATED = "2026-11-19 v133";      // page version: only moves when behavior changes. v113-test merged from testrepo; main carries its own stamp, no -test suffix
 const DATA_UPDATED = "track list updated 2026-11-05"; // v100-test: data label is separate from the page version — adds never bump the version
 const LS = "hilands_radio_stars_v1", LSS = "hilands_radio_saved_v1", LSK = "hilands_radio_kindfix_v1", LSL = "hilands_radio_lane_v1", LSU = "hilands_radio_unsorted_v1", LSV = "hilands_radio_votes_v1", LSP = "hilands_radio_plays_v1", LSPM = "hilands_radio_plmode_v1", PSORT_KEY = "hilands_radio_plsort_v1",
-      LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1";
+      LSG = "hilands_radio_global_v1", LSMIG = "hilands_radio_migrated_v3", LDUR = "hilands_radio_dursave_v1", LSDEAD = "hilands_radio_dead_v1";
 function load(k,def){ try{ return JSON.parse(localStorage.getItem(k)||def); }catch(e){ return JSON.parse(def); } }
 let stars = load(LS,"{}"), saved = load(LSS,"[]"), kindfix = load(LSK,"{}"), glob = load(LSG,"{}"), dursave = load(LDUR,"{}");
+/* v133: a row that just failed to load is remembered on this device so the queue stops
+   coming back to it. Half an hour, not forever: a dead row is usually a network moment,
+   not a dead file. Tapping the row clears it for good. */
+let dead = load(LSDEAD,"{}"); if(!dead || typeof dead!=="object") dead={};
+const DEAD_FOR = 30*60*1000;
+function deadNow(id){ const at=dead[String(id)]; return !!at && Date.now()-at < DEAD_FOR; }
+function markDead(id){ if(!id) return; const now=Date.now();
+  for(const k in dead){ if(now-dead[k] >= DEAD_FOR) delete dead[k]; }
+  dead[String(id)]=now; try{ localStorage.setItem(LSDEAD,JSON.stringify(dead)); }catch(e){} }
+const errSeen={};   // v133: per-row error count for this session; one blip is not a dead row
+function clearDead(id){ if(!dead[String(id)]) return; delete dead[String(id)]; try{ localStorage.setItem(LSDEAD,JSON.stringify(dead)); }catch(e){} }
 function effDur(t){ return (t.dur && t.dur!=="0") ? +t.dur : (dursave[t.id]||null); }
 let plmode = load(LSPM,"0")==="1";
 let lane = load(LSL,'"music"'), unso = load(LSU,"false")===true, votes = load(LSV,"{}"), plays = load(LSP,"{}");
@@ -595,7 +606,7 @@ function setMedia(t){
         // (armed is null then). Only a handoff that was allowed to start gets committed;
         // one still waiting on its promise falls through to the guarded advance.
         if(!armed) return;
-        if(armed.started && !armed.refused){ finishSwap(); errStreak=0; return; }
+        if(armed.started && !armed.refused){ finishSwap(); return; }  // v133: a handoff that never actually played is not progress either
       }
       next(true);
     },
@@ -687,21 +698,29 @@ function playCurrent(){
   refreshRows();  // v67b: the more-list marker moves with every track change, play-all included
 }
 function nextIx(fwd){
-  if(fwd){ const i=idx+1; return i>=queue.length?0:i; }
-  return idx>0?idx-1:0;
+  // v133: forward advances step over rows this device just failed to load, so a dead
+  // row is not returned to. Backwards is still a plain step: you asked for the one before.
+  if(!fwd) return idx>0?idx-1:0;
+  let i=idx+1; if(i>=queue.length) i=0;
+  let g=queue.length;
+  while(g-->0 && queue[i] && deadNow(queue[i].id)){ i++; if(i>=queue.length) i=0; }
+  return i;
 }
 function next(fwd=true, force=false){
   // v123: one advance per press. A locked screen can dispatch nexttrack more than
   // once for a single tap (notification + media session), and each dispatch used to
-  // advance again, so one press ran through several songs. errStreak is no longer
-  // zeroed here: it is reset on a real play event (el.onplay), so a run of failed
-  // loads now stops at the guard in el.onerror instead of walking the whole queue.
+  // advance again, so one press ran through several songs. errStreak is not zeroed
+  // here either; since v133 only real audio clears it (1.5s in el.ontimeupdate), so a
+  // run of failed loads stops at the guard in el.onerror instead of walking the queue.
   const nowAdv=Date.now();
   if(!force && nowAdv-lastAdvance<600) return;
   lastAdvance=nowAdv;
   const cur=queue[idx];
   if(cur) recentLeft[cur.id]={at:Date.now(), s:skippedThisPlay};
-  if(fwd){ idx++; if(idx>=queue.length){ queue=keyed(); idx=0; } } else { if(idx>0) idx--; else { queue=keyed(); idx=0; } }
+  if(fwd){ idx++; if(idx>=queue.length){ queue=keyed(); idx=0; }
+    let g=queue.length;
+    while(g-->0 && queue[idx] && deadNow(queue[idx].id)){ idx++; if(idx>=queue.length){ queue=keyed(); idx=0; } }
+  } else { if(idx>0) idx--; else { queue=keyed(); idx=0; } }
   lastSwap=Date.now();
   playCurrent();
 }
@@ -841,7 +860,9 @@ function wire(el){
   const mine=()=>el===audio;
   const dropArmed=()=>{ if(armed && armed.el===el && !armed.started) armed=null; };
   el.addEventListener("play",()=>{ if(!mine()) return; const t=queue[idx]; if(t) document.title=(t.title||"Hilands Radio")+" \u00b7 "+((t.maker)||"")+" \u2014 Hilands Radio"; });
-  el.onplay=()=>{ if(!mine()) return; clearAf(); logHist(queue[idx]); errStreak=0; lastTick=Date.now(); setIcon(true); setResume(false); ms("playbackState","playing"); setPos(); tryLiveWire(el); if(!envRaf&&wantPlay&&!el.paused) envRaf=requestAnimationFrame(drawViz); };
+  // v133: errStreak is NOT reset here any more. A track that fires play and then errors
+  // is not progress; the reset lives on real audio (el.ontimeupdate, 1.5s).
+  el.onplay=()=>{ if(!mine()) return; clearAf(); logHist(queue[idx]); lastTick=Date.now(); setIcon(true); setResume(false); ms("playbackState","playing"); setPos(); tryLiveWire(el); if(!envRaf&&wantPlay&&!el.paused) envRaf=requestAnimationFrame(drawViz); };
   el.onpause=()=>{ if(!mine()) return; setIcon(false); ms("playbackState","paused");
     // v76: a pause nobody asked for (buffer underrun, OS audio focus, backgrounded
     // play() drop) is retried, so the radio self-heals instead of sitting silent.
@@ -875,9 +896,20 @@ function wire(el){
     // If play() was refused, sameElSwap above already handled it.
   };
   el.onstalled=()=>{ if(!mine()){ dropArmed(); return; } attemptPlay(); }; // v76: no load() here, it resets the track
-  el.onerror=()=>{ if(!mine()){ dropArmed(); return; } errStreak++; if(errStreak>6){ wantPlay=false; setIcon(false); setNote("Couldn't reach the next track. Tap play to try again."); return; } rebuildAudioSession(); setTimeout(()=>next(true),600); };
+  el.onerror=()=>{ if(!mine()){ dropArmed(); return; } errStreak++;
+    // v133: a row is remembered as dead on its SECOND failure in this session, so one
+    // network blip on a good file does not bench it. The advance below skips dead rows.
+    const eid=queue[idx] && queue[idx].id;
+    if(eid){ errSeen[eid]=(errSeen[eid]||0)+1; if(errSeen[eid]>=2) markDead(eid); }
+    if(errStreak>6){ wantPlay=false; setIcon(false); setNote("Couldn't reach the next track. Tap play to try again."); return; }
+    rebuildAudioSession(); setTimeout(()=>next(true),600); };
   el.ontimeupdate=()=>{ if(!mine()) return; lastTick=Date.now();
     if(el.duration){ elBar.style.width=(100*audio.currentTime/audio.duration)+"%"; elCur.textContent=fmt(audio.currentTime); }
+    // v133: the only thing that clears errStreak is real audio. 1.5 seconds at the
+    // current position means the file opened and played, which a play event alone
+    // does not prove. Without this, one play-then-error per row reset the count and
+    // the queue walked the whole shelf.
+    if(errStreak && audio.currentTime>=1.5){ errStreak=0; if(queue[idx]) delete errSeen[queue[idx].id]; }
     if(!playCounted && audio.currentTime>=5){ playCounted=true; logPlay(queue[idx]); }  // real playback, not a load
     // v121: a play on the label means "got past the halfway point". 30% is the skip ruler,
     // and passing it is a bounce, not a play (owner's read, agreed). Halfway is past any
@@ -1268,7 +1300,8 @@ function playId(id){
   let j=queue.findIndex(x=>String(x.id)===String(id));
   if(j<0){ queue=keyed(); j=queue.findIndex(x=>String(x.id)===String(id)); }
   if(j<0){ queue.push(t); j=queue.length-1; }  // v99: tapped track outside the current lane still plays
-  idx=j; closeSheet(); playCurrent(); refreshRows();  // v67b: mark the tapped row the moment it is tapped
+  // v133: an explicit tap is a deliberate retry, so the dead mark comes off.
+  idx=j; clearDead(t.id); closeSheet(); playCurrent(); refreshRows();  // v67b: mark the tapped row the moment it is tapped
 }
 /* v66 more-from-this-artist: the maker line now carries a "more" button. It opens
    tracks from the same artist handle only (maker display names repeat across

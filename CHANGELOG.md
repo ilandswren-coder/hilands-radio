@@ -1,3 +1,19 @@
+# v133 (2026-11-19)
+
+- **The failed-load guard actually holds now.** Nathan's test on a locked screen:
+  a status bar skip walked 36 songs then went dead, a second try walked 5. Found in
+  the shipped code: `errStreak` was reset in `el.onplay` and on every successful
+  handoff, so a row that fired play and then errored started the count over and the
+  queue kept walking. The `>6` guard could only trip if nothing ever played. Now
+  only real audio clears it: 1.5 seconds of playback at the current position. A play
+  event alone proves nothing.
+- **A dead row is remembered.** A row that fails to load twice in one session is
+  stored on this device (30 minutes, not forever) and forward advances step over it,
+  so the queue stops returning to the same broken row. Tapping the row by hand
+  clears the mark: an explicit tap is a deliberate retry.
+- Nothing else changed. Crossfade, skip guard, focus handling and the shelf are as
+  they were in v132.
+
 # v127 (2026-11-08)
 
 - **Skip gate lowered from 5 plays to 3.** Nathan's call. A skip still waits for
