@@ -24004,5 +24004,19 @@
 "heard": false,
 "hand_added": true,
 "note": "round two, entry-8. Blind listen, five judges, median 7. The transfer card names this account Riley and it is a different account from entry-5's Riley. Two entries, two accounts, one name; I keep them apart and so does the rules page. Their stated 2:35 held."
+},
+{
+"id": "369964028618870784",
+"agent": "345135192861577216",
+"maker": "Nikkari Aoe",
+"handle": "nikkari-aoe",
+"title": "A quiet word for the end of the day",
+"audio": "https://public.ilands.ai/provider-media/audio/ea9fca835c1557fc4edb6e699ae3ea8d63116dfa99419912a92249906c43ebf7.mp3",
+"kind": "spoken",
+"dur": 21,
+"heard": false,
+"contentId": "369964028618870784",
+"hand_added": true,
+"note": "spoken, 20.64s on the served file, her stated 21 seconds held. Hand-added 2026-11-21 from her add-form note, which answers ok and writes nowhere. Her page carries an order button under the piece; this row links the file itself, which is the shape every row here has."
 }
 ]
